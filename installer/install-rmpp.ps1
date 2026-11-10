@@ -176,8 +176,12 @@ if (-not (Remote "true" -Batch)) {
 Say "$(M 'loggedin') $TabletHost"
 
 # 2. Choose packages (menu in a console; -Packages / -Yes or redirected input: no menu).
-$installedRaw = & ssh @SshOpts $Target '/home/root/.vellum/bin/vellum list 2>/dev/null | grep "\[installed\]" | cut -d" " -f1' 2>$null
-$Installed = @($installedRaw | ForEach-Object { $_ -replace '-[0-9][^-]*-r[0-9]*$', '' })
+# Only used for the "(installed)" marks, so a failure here must not stop the installer. No double quotes in the
+# remote command: Windows PowerShell 5.1 drops them when it passes arguments to native programs.
+$prevPref = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+$installedRaw = & ssh @SshOpts $Target "/home/root/.vellum/bin/vellum list 2>/dev/null | grep -F '[installed]' | cut -d' ' -f1" 2>$null
+$ErrorActionPreference = $prevPref
+$Installed = @($installedRaw | Where-Object { $_ } | ForEach-Object { $_ -replace '-[0-9][^-]*-r[0-9]*$', '' })
 if ($Packages.Count -gt 0) {
     $Selected = @($Packages | ForEach-Object { $_ -split "," } | Where-Object { $_ })
 } elseif ($Yes -or [Console]::IsInputRedirected) {
