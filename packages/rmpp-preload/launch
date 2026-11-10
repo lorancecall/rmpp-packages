@@ -1,0 +1,13 @@
+#!/bin/sh
+# Start xochitl with every library in /usr/lib/rmpp-preload.d added to LD_PRELOAD.
+# An LD_PRELOAD that is already set (for example xovi's) is kept in front.
+extra=""
+for f in /usr/lib/rmpp-preload.d/*.so; do
+	[ -e "$f" ] && extra="$extra $(readlink -f "$f")"
+done
+extra=${extra# }
+if [ -n "$extra" ]; then
+	LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD }$extra"
+	export LD_PRELOAD
+fi
+exec "$@"
