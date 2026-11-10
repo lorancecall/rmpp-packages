@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-preload
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 upstream_author="lorancecall"
 category="framework"
 pkgdesc="Loads rmpp add-on libraries into xochitl at boot, next to xovi"
@@ -25,10 +25,11 @@ package() {
 
 postinstall() {
 	/home/root/.vellum/bin/mount-rw
-	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
+	mkdir -p "$(dirname /usr/lib/rmpp-preload/launch)"
+	cp /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch.new && chmod 755 /usr/lib/rmpp-preload/launch.new && mv -f /usr/lib/rmpp-preload/launch.new /usr/lib/rmpp-preload/launch
 	mkdir -p /usr/lib/rmpp-preload.d
-	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
-		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	mkdir -p "$(dirname /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf)"
+	cp /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new && chmod 644 /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new && mv -f /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
 	sync
 	/home/root/.vellum/bin/mount-restore
 	# No restart here: the add-on packages that depend on this one restart xochitl after installing.
@@ -37,23 +38,26 @@ postinstall() {
 
 postupgrade() {
 	/home/root/.vellum/bin/mount-rw
-	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
+	mkdir -p "$(dirname /usr/lib/rmpp-preload/launch)"
+	cp /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch.new && chmod 755 /usr/lib/rmpp-preload/launch.new && mv -f /usr/lib/rmpp-preload/launch.new /usr/lib/rmpp-preload/launch
 	mkdir -p /usr/lib/rmpp-preload.d
-	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
-		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	mkdir -p "$(dirname /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf)"
+	cp /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new && chmod 644 /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new && mv -f /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
 	sync
-	/home/root/.vellum/bin/mount-restore
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
 }
 
 # `vellum reenable` after an OS update: the root file system is already writable here.
 postosupgrade() {
-	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
+	mkdir -p "$(dirname /usr/lib/rmpp-preload/launch)"
+	cp /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch.new && chmod 755 /usr/lib/rmpp-preload/launch.new && mv -f /usr/lib/rmpp-preload/launch.new /usr/lib/rmpp-preload/launch
 	mkdir -p /usr/lib/rmpp-preload.d
-	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
-		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	mkdir -p "$(dirname /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf)"
+	cp /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new && chmod 644 /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new && mv -f /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf.new /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
 	sync
 	systemctl daemon-reload
 }
@@ -63,10 +67,11 @@ predeinstall() {
 	rm -f /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
 	rm -rf /usr/lib/rmpp-preload /usr/lib/rmpp-preload.d
 	sync
-	/home/root/.vellum/bin/mount-restore
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
 }
 sha512sums="
 08d002421e6f3183f77e070feb5bf4b8c1e929277bd787e6ace18288b6d0e85ea953abe6db3edb34b5df5c05ce3853134bb5b20d71642f34775c82ab4044b632  launch
