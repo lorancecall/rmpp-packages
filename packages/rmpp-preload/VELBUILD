@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-preload
 pkgver=0.1.0
-pkgrel=0
+pkgrel=1
 upstream_author="lorancecall"
 category="framework"
 pkgdesc="Loads rmpp add-on libraries into xochitl at boot, next to xovi"
@@ -20,36 +20,41 @@ package() {
 	install -Dm644 "$srcdir"/rmpp-preload.conf "$pkgdir"/home/root/.vellum/share/rmpp-preload/rmpp-preload.conf
 }
 
-# Copy the launcher and the xochitl drop-in into the read-only root file system.
-_rmpp_preload_install() {
+# Each lifecycle function runs as its own script: no shared helpers, every step is written out.
+# Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
 	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
 	mkdir -p /usr/lib/rmpp-preload.d
 	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
 		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
 	sync
+	/home/root/.vellum/bin/mount-restore
+	# No restart here: the add-on packages that depend on this one restart xochitl after installing.
+	systemctl daemon-reload
 }
 
-# Restart xochitl to apply. Never `systemctl stop xochitl`: that powers the tablet off.
-_rmpp_restart_xochitl() {
+postupgrade() {
+	/home/root/.vellum/bin/mount-rw
+	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
+	mkdir -p /usr/lib/rmpp-preload.d
+	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
+		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	sync
+	/home/root/.vellum/bin/mount-restore
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
 }
 
-postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	_rmpp_preload_install
-	/home/root/.vellum/bin/mount-restore
-	_rmpp_restart_xochitl
-}
-
-postupgrade() {
-	postinstall
-}
-
 # `vellum reenable` after an OS update: the root file system is already writable here.
 postosupgrade() {
-	_rmpp_preload_install
+	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
+	mkdir -p /usr/lib/rmpp-preload.d
+	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
+		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	sync
 	systemctl daemon-reload
 }
 
@@ -59,7 +64,9 @@ predeinstall() {
 	rm -rf /usr/lib/rmpp-preload /usr/lib/rmpp-preload.d
 	sync
 	/home/root/.vellum/bin/mount-restore
-	_rmpp_restart_xochitl
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
 }
 sha512sums="
 08d002421e6f3183f77e070feb5bf4b8c1e929277bd787e6ace18288b6d0e85ea953abe6db3edb34b5df5c05ce3853134bb5b20d71642f34775c82ab4044b632  launch
