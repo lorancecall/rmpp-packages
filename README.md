@@ -13,14 +13,23 @@ None of them needs xovi, and they keep working after a reboot.
 
 ## Install
 
-Turn on developer mode on the tablet (the root password is in Settings > General > Help > About > Copyrights and licenses), connect it by USB or Wi-Fi, then run the installer on your computer. It logs in with the password once, sets up an SSH key, installs Vellum if it is missing, and installs the packages.
+1. Turn on developer mode on the tablet: Settings > General > Paper tablet > Software > Advanced > Developer mode.
+   **This resets the tablet and deletes what is on it: sync your notebooks to the cloud first**
+   ([reMarkable developer documentation](https://developer.remarkable.com/documentation/developer-mode)).
+2. The root password is then shown in Settings > General > Help > About > Copyrights and licenses.
+3. Connect the tablet by USB (address `10.11.99.1`) or Wi-Fi, then run the installer on your computer. It logs in
+   with the password once, sets up an SSH key, installs Vellum if it is missing, and installs the packages you pick.
 
-**Windows (PowerShell):**
+**Windows**, in PowerShell. Both Windows PowerShell 5.1 (`powershell`, built into Windows 10/11) and
+PowerShell 7 (`pwsh`, if you installed it) work; use either line 2:
 
 ```powershell
 irm https://lorancecall.github.io/rmpp-packages/install-rmpp.ps1 -OutFile install-rmpp.ps1
 powershell -ExecutionPolicy Bypass -File install-rmpp.ps1
+pwsh -ExecutionPolicy Bypass -File install-rmpp.ps1
 ```
+
+It needs the built-in OpenSSH client (Settings > Apps > Optional features > OpenSSH Client).
 
 **Linux / macOS:**
 
@@ -28,6 +37,27 @@ powershell -ExecutionPolicy Bypass -File install-rmpp.ps1
 curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o install-rmpp.sh
 sh install-rmpp.sh
 ```
+
+After logging in, the installer shows a checkbox menu of all rmpp mods: one line per mod (short description,
+"installed" mark), and the full description of the mod under the cursor below the list. Korean input and
+Bluetooth are selected by default, installed mods stay selected. ↑↓ to move, Space to select, **L to switch
+between Korean and English** (the language starts from your system language), Enter to install, Q to quit
+(nothing is installed).
+
+Besides the packages above, the menu offers [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) (handwriting
+recognition), which is not a Vellum package: the installer downloads it from its GitHub release.
+
+The menu is built from a catalog ([`mods.txt`](mods.txt) plus an `rmpp-mod.conf` in each mod's repository), so
+adding a mod is one line: see [MODS.md](MODS.md).
+
+Options (Windows: add them after `-File install-rmpp.ps1`, with `powershell` or `pwsh`):
+
+| | Linux / macOS | Windows |
+|---|---|---|
+| tablet address | `sh install-rmpp.sh 10.11.99.1` | `-TabletHost 10.11.99.1` |
+| pick mods, no menu | `--packages rmpp-korean,rmpp-bt` | `-Packages rmpp-korean,rmpp-bt` |
+| default selection, no questions | `--yes` | `-Yes` |
+| language | `--lang ko` or `--lang en` | `-Lang ko` or `-Lang en` |
 
 Run the same installer again after a reMarkable OS update.
 
