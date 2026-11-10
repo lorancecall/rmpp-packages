@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-korean
 pkgver=0.1.0
-pkgrel=0
+pkgrel=1
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Korean (Hangul) keyboard and fonts; Bluetooth/USB keyboards with a Korean toggle"
@@ -21,6 +21,9 @@ OFL-LICENSE::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_licens
 "
 options="!check !fhs !strip"
 
+# Each lifecycle function runs as its own script: no shared helpers, every step is written out.
+# Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+
 package() {
 	install -Dm755 "$srcdir"/libhangul.so "$pkgdir"/home/root/.vellum/share/rmpp-korean/libhangul.so
 	install -Dm644 "$srcdir"/ko_KR.rcc "$pkgdir"/home/root/.vellum/share/rmpp-korean/ko_KR.rcc
@@ -36,8 +39,40 @@ package() {
 		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
 }
 
-# xochitl starts before /home is mounted, so the library and layout must live in the root file system.
-_rmpp_korean_install() {
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	install -Dm755 /home/root/.vellum/share/rmpp-korean/libhangul.so /usr/lib/rmpp-korean/libhangul.so
+	install -Dm644 /home/root/.vellum/share/rmpp-korean/ko_KR.rcc /usr/lib/rmpp-korean/ko_KR.rcc
+	mkdir -p /usr/lib/rmpp-preload.d
+	ln -sf /usr/lib/rmpp-korean/libhangul.so /usr/lib/rmpp-preload.d/50-rmpp-korean.so
+	# Files from manual test installs before this package existed
+	rm -f /usr/lib/systemd/system/xochitl.service.d/hangul.conf
+	rm -rf /usr/lib/hangul
+	sync
+	/home/root/.vellum/bin/mount-restore
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+postupgrade() {
+	/home/root/.vellum/bin/mount-rw
+	install -Dm755 /home/root/.vellum/share/rmpp-korean/libhangul.so /usr/lib/rmpp-korean/libhangul.so
+	install -Dm644 /home/root/.vellum/share/rmpp-korean/ko_KR.rcc /usr/lib/rmpp-korean/ko_KR.rcc
+	mkdir -p /usr/lib/rmpp-preload.d
+	ln -sf /usr/lib/rmpp-korean/libhangul.so /usr/lib/rmpp-preload.d/50-rmpp-korean.so
+	# Files from manual test installs before this package existed
+	rm -f /usr/lib/systemd/system/xochitl.service.d/hangul.conf
+	rm -rf /usr/lib/hangul
+	sync
+	/home/root/.vellum/bin/mount-restore
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here.
+postosupgrade() {
 	install -Dm755 /home/root/.vellum/share/rmpp-korean/libhangul.so /usr/lib/rmpp-korean/libhangul.so
 	install -Dm644 /home/root/.vellum/share/rmpp-korean/ko_KR.rcc /usr/lib/rmpp-korean/ko_KR.rcc
 	mkdir -p /usr/lib/rmpp-preload.d
@@ -48,36 +83,15 @@ _rmpp_korean_install() {
 	sync
 }
 
-# Restart xochitl to apply. Never `systemctl stop xochitl`: that powers the tablet off.
-_rmpp_restart_xochitl() {
-	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-}
-
-postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	_rmpp_korean_install
-	/home/root/.vellum/bin/mount-restore
-	_rmpp_restart_xochitl
-}
-
-postupgrade() {
-	postinstall
-}
-
-# `vellum reenable` after an OS update: the root file system is already writable here.
-postosupgrade() {
-	_rmpp_korean_install
-}
-
 predeinstall() {
 	/home/root/.vellum/bin/mount-rw
 	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
 	rm -rf /usr/lib/rmpp-korean
 	sync
 	/home/root/.vellum/bin/mount-restore
-	_rmpp_restart_xochitl
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
 }
 sha512sums="
 710db3f3812da289e1c421933c4d7867a7ab7697d2da750aa69815f06d21db3b2cbeaa16c286b85e8d543ed6178113e776209ecfd872d1b879c40763d44e0559  libhangul.so

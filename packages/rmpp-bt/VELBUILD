@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-bt
 pkgver=0.1.0
-pkgrel=0
+pkgrel=1
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi)"
@@ -19,6 +19,9 @@ reconnect
 "
 options="!check !fhs !strip"
 
+# Each lifecycle function runs as its own script: no shared helpers, every step is written out.
+# Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+
 package() {
 	local d="$pkgdir"/home/root/.vellum/share/rmpp-bt
 	install -Dm755 "$srcdir"/librmpp-bt.so "$d"/librmpp-bt.so
@@ -32,9 +35,49 @@ package() {
 		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
 }
 
-# xochitl and the Bluetooth driver start before /home is mounted, so these live in the root file system.
-_rmpp_bt_install() {
-	local s=/home/root/.vellum/share/rmpp-bt
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	s=/home/root/.vellum/share/rmpp-bt
+	install -Dm755 "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so
+	install -Dm644 "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc
+	install -Dm755 "$s"/reconnect /usr/lib/rmpp-bt/reconnect
+	install -Dm644 "$s"/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bluetooth.service
+	install -Dm644 "$s"/rmpp-bt-reconnect.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
+	mkdir -p /usr/lib/systemd/system/multi-user.target.wants /usr/lib/rmpp-preload.d
+	ln -sf ../rmpp-bluetooth.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+	ln -sf /usr/lib/rmpp-bt/librmpp-bt.so /usr/lib/rmpp-preload.d/50-rmpp-bt.so
+	sync
+	/home/root/.vellum/bin/mount-restore
+	systemctl daemon-reload
+	systemctl start rmpp-bluetooth.service || true
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+postupgrade() {
+	/home/root/.vellum/bin/mount-rw
+	s=/home/root/.vellum/share/rmpp-bt
+	install -Dm755 "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so
+	install -Dm644 "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc
+	install -Dm755 "$s"/reconnect /usr/lib/rmpp-bt/reconnect
+	install -Dm644 "$s"/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bluetooth.service
+	install -Dm644 "$s"/rmpp-bt-reconnect.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
+	mkdir -p /usr/lib/systemd/system/multi-user.target.wants /usr/lib/rmpp-preload.d
+	ln -sf ../rmpp-bluetooth.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+	ln -sf /usr/lib/rmpp-bt/librmpp-bt.so /usr/lib/rmpp-preload.d/50-rmpp-bt.so
+	sync
+	/home/root/.vellum/bin/mount-restore
+	systemctl daemon-reload
+	systemctl start rmpp-bluetooth.service || true
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here.
+postosupgrade() {
+	s=/home/root/.vellum/share/rmpp-bt
 	install -Dm755 "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so
 	install -Dm644 "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc
 	install -Dm755 "$s"/reconnect /usr/lib/rmpp-bt/reconnect
@@ -46,31 +89,6 @@ _rmpp_bt_install() {
 	sync
 }
 
-# Restart xochitl to apply. Never `systemctl stop xochitl`: that powers the tablet off.
-_rmpp_restart_xochitl() {
-	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-}
-
-postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	_rmpp_bt_install
-	/home/root/.vellum/bin/mount-restore
-	systemctl daemon-reload
-	systemctl start rmpp-bluetooth.service || true
-	_rmpp_restart_xochitl
-}
-
-postupgrade() {
-	postinstall
-}
-
-# `vellum reenable` after an OS update: the root file system is already writable here.
-postosupgrade() {
-	_rmpp_bt_install
-}
-
 predeinstall() {
 	/home/root/.vellum/bin/mount-rw
 	rm -f /usr/lib/rmpp-preload.d/50-rmpp-bt.so
@@ -79,7 +97,9 @@ predeinstall() {
 	rm -rf /usr/lib/rmpp-bt
 	sync
 	/home/root/.vellum/bin/mount-restore
-	_rmpp_restart_xochitl
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
 	if [ "$VELLUM_PURGE" = "1" ]; then
 		rm -rf /home/root/.config/rmpp-bt
 	fi
