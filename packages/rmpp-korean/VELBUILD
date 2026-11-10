@@ -1,0 +1,89 @@
+maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
+pkgname=rmpp-korean
+pkgver=0.1.0
+pkgrel=0
+upstream_author="lorancecall"
+category="ui"
+pkgdesc="Korean (Hangul) keyboard and fonts; Bluetooth/USB keyboards with a Korean toggle"
+url="https://github.com/lorancecall/rmpp-korean"
+arch="aarch64"
+license="GPL-3.0-only AND OFL-1.1"
+depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
+_fonts_commit="165c01b46ea533872e002e0785ff17e44f6d97d8"
+_fonts_license_commit="a99a4354c68964f6bfac488d01010b1fb6d9178a"
+source="
+https://github.com/$upstream_author/rmpp-korean/releases/download/v$pkgver/libhangul.so
+https://github.com/$upstream_author/rmpp-korean/releases/download/v$pkgver/ko_KR.rcc
+https://raw.githubusercontent.com/$upstream_author/rmpp-korean/v$pkgver/LICENSE
+NotoSansCJKkr-Regular.otf::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_commit/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf
+NotoSansCJKkr-Bold.otf::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_commit/Sans/OTF/Korean/NotoSansCJKkr-Bold.otf
+OFL-LICENSE::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_license_commit/Sans/LICENSE
+"
+options="!check !fhs !strip"
+
+package() {
+	install -Dm755 "$srcdir"/libhangul.so "$pkgdir"/home/root/.vellum/share/rmpp-korean/libhangul.so
+	install -Dm644 "$srcdir"/ko_KR.rcc "$pkgdir"/home/root/.vellum/share/rmpp-korean/ko_KR.rcc
+
+	install -Dm644 "$srcdir"/NotoSansCJKkr-Regular.otf \
+		"$pkgdir"/home/root/.local/share/fonts/rmpp-korean/NotoSansCJKkr-Regular.otf
+	install -Dm644 "$srcdir"/NotoSansCJKkr-Bold.otf \
+		"$pkgdir"/home/root/.local/share/fonts/rmpp-korean/NotoSansCJKkr-Bold.otf
+
+	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
+	install -Dm644 "$srcdir"/OFL-LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/OFL-LICENSE
+	echo "https://github.com/$upstream_author/rmpp-korean" > \
+		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
+}
+
+# xochitl starts before /home is mounted, so the library and layout must live in the root file system.
+_rmpp_korean_install() {
+	install -Dm755 /home/root/.vellum/share/rmpp-korean/libhangul.so /usr/lib/rmpp-korean/libhangul.so
+	install -Dm644 /home/root/.vellum/share/rmpp-korean/ko_KR.rcc /usr/lib/rmpp-korean/ko_KR.rcc
+	mkdir -p /usr/lib/rmpp-preload.d
+	ln -sf /usr/lib/rmpp-korean/libhangul.so /usr/lib/rmpp-preload.d/50-rmpp-korean.so
+	# Files from manual test installs before this package existed
+	rm -f /usr/lib/systemd/system/xochitl.service.d/hangul.conf
+	rm -rf /usr/lib/hangul
+	sync
+}
+
+# Restart xochitl to apply. Never `systemctl stop xochitl`: that powers the tablet off.
+_rmpp_restart_xochitl() {
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	_rmpp_korean_install
+	/home/root/.vellum/bin/mount-restore
+	_rmpp_restart_xochitl
+}
+
+postupgrade() {
+	postinstall
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here.
+postosupgrade() {
+	_rmpp_korean_install
+}
+
+predeinstall() {
+	/home/root/.vellum/bin/mount-rw
+	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
+	rm -rf /usr/lib/rmpp-korean
+	sync
+	/home/root/.vellum/bin/mount-restore
+	_rmpp_restart_xochitl
+}
+sha512sums="
+710db3f3812da289e1c421933c4d7867a7ab7697d2da750aa69815f06d21db3b2cbeaa16c286b85e8d543ed6178113e776209ecfd872d1b879c40763d44e0559  libhangul.so
+d665563089889fda76d782a4ca4592d391fc60d5adcbea4a3cc3cd1954a00318fb91b97de223c653a7dc50b493bd39915ead5871cd260a871ead2b68df8f97da  ko_KR.rcc
+900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
+5010e4db7b2851702a867af2fdc1ff26d1652cd91c04421d2c62f39a2f208694c1d889957e382c72cc340ba9b4f48b0ebffbc5e880be63a8301cbcd28a59f23c  NotoSansCJKkr-Regular.otf
+c08f86b5553f42b773ce0c4313e4a496170f16139ab2bc5e63ab9714a99b0a1954b755b94ac508f35606decf42bdf0f9a64e8cd1f08dca0ba9245752d5e3fb02  NotoSansCJKkr-Bold.otf
+53cf33ddac5d44b9f622a041f267bcf53ca704555f0481ee3e89eeba505019c8d1d504a6ffe7ebd6a7d1d5d7d26cf3da052cc63b3540eb4260ce74a93cf35841  OFL-LICENSE
+"

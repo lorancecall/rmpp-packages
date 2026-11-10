@@ -1,0 +1,67 @@
+maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
+pkgname=rmpp-preload
+pkgver=0.1.0
+pkgrel=0
+upstream_author="lorancecall"
+category="framework"
+pkgdesc="Loads rmpp add-on libraries into xochitl at boot, next to xovi"
+url="https://github.com/lorancecall/rmpp-packages"
+arch="noarch"
+license="GPL-3.0-only"
+depends="!rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
+source="
+launch
+rmpp-preload.conf
+"
+options="!check !fhs"
+
+package() {
+	install -Dm755 "$srcdir"/launch "$pkgdir"/home/root/.vellum/share/rmpp-preload/launch
+	install -Dm644 "$srcdir"/rmpp-preload.conf "$pkgdir"/home/root/.vellum/share/rmpp-preload/rmpp-preload.conf
+}
+
+# Copy the launcher and the xochitl drop-in into the read-only root file system.
+_rmpp_preload_install() {
+	install -Dm755 /home/root/.vellum/share/rmpp-preload/launch /usr/lib/rmpp-preload/launch
+	mkdir -p /usr/lib/rmpp-preload.d
+	install -Dm644 /home/root/.vellum/share/rmpp-preload/rmpp-preload.conf \
+		/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	sync
+}
+
+# Restart xochitl to apply. Never `systemctl stop xochitl`: that powers the tablet off.
+_rmpp_restart_xochitl() {
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	_rmpp_preload_install
+	/home/root/.vellum/bin/mount-restore
+	_rmpp_restart_xochitl
+}
+
+postupgrade() {
+	postinstall
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here.
+postosupgrade() {
+	_rmpp_preload_install
+	systemctl daemon-reload
+}
+
+predeinstall() {
+	/home/root/.vellum/bin/mount-rw
+	rm -f /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf
+	rm -rf /usr/lib/rmpp-preload /usr/lib/rmpp-preload.d
+	sync
+	/home/root/.vellum/bin/mount-restore
+	_rmpp_restart_xochitl
+}
+sha512sums="
+08d002421e6f3183f77e070feb5bf4b8c1e929277bd787e6ace18288b6d0e85ea953abe6db3edb34b5df5c05ce3853134bb5b20d71642f34775c82ab4044b632  launch
+fba11f8aed8e706b1f2b227a45e52a7c6600d5f8c4f1d826b3e931e3bc2bab4da5166a207adc51eafc8de9d052341d2f001f6001c2901606c3cadf52ac395e24  rmpp-preload.conf
+"

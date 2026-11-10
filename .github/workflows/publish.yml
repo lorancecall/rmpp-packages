@@ -1,0 +1,70 @@
+name: Build and publish packages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install vbuild
+        run: |
+          sudo curl -sfL https://github.com/Eeems/vbuild/releases/download/0.0.36/vbuild-x86_64-glibc -o /usr/local/bin/vbuild
+          sudo chmod +x /usr/local/bin/vbuild
+
+      - name: Signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          printf '%s\n' "$SIGNING_KEY" > keys/lorancecall-rmpp.rsa
+          chmod 600 keys/lorancecall-rmpp.rsa
+
+      - name: Build packages
+        run: |
+          for p in packages/*/; do ./scripts/build-package.sh "$(basename "$p")"; done
+
+      - name: Make the aarch64 repository
+        run: |
+          mkdir -p site/aarch64
+          cp dist/aarch64/*.apk dist/noarch/*.apk site/aarch64/ 2>/dev/null || true
+          docker run --rm -v "$PWD/site/aarch64:/packages" -v "$PWD/keys:/keys:ro" -w /packages \
+            ghcr.io/eeems/vbuild-builder:main sh -c "
+              cp /keys/lorancecall-rmpp.rsa.pub /etc/apk/keys/
+              apk index --rewrite-arch aarch64 -o APKINDEX.tar.gz *.apk
+              abuild-sign -k /keys/lorancecall-rmpp.rsa APKINDEX.tar.gz
+              for f in *.apk; do apk verify \$f; done
+              chown $(id -u):$(id -g) APKINDEX.tar.gz"
+          cp keys/lorancecall-rmpp.rsa.pub site/
+          cp install.sh site/
+          ls -la site site/aarch64
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

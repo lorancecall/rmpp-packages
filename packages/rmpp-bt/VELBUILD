@@ -1,0 +1,94 @@
+maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
+pkgname=rmpp-bt
+pkgver=0.1.0
+pkgrel=0
+upstream_author="lorancecall"
+category="ui"
+pkgdesc="Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi)"
+url="https://github.com/lorancecall/rmpp-bt"
+arch="aarch64"
+license="GPL-3.0-only"
+depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30 !bluetooth-settings !quicksettings-bluetooth"
+source="
+https://github.com/$upstream_author/rmpp-bt/releases/download/v$pkgver/librmpp-bt.so
+https://github.com/$upstream_author/rmpp-bt/releases/download/v$pkgver/rmpp-bt.rcc
+https://raw.githubusercontent.com/$upstream_author/rmpp-bt/v$pkgver/LICENSE
+rmpp-bluetooth.service
+rmpp-bt-reconnect.service
+reconnect
+"
+options="!check !fhs !strip"
+
+package() {
+	local d="$pkgdir"/home/root/.vellum/share/rmpp-bt
+	install -Dm755 "$srcdir"/librmpp-bt.so "$d"/librmpp-bt.so
+	install -Dm644 "$srcdir"/rmpp-bt.rcc "$d"/rmpp-bt.rcc
+	install -Dm644 "$srcdir"/rmpp-bluetooth.service "$d"/rmpp-bluetooth.service
+	install -Dm644 "$srcdir"/rmpp-bt-reconnect.service "$d"/rmpp-bt-reconnect.service
+	install -Dm755 "$srcdir"/reconnect "$d"/reconnect
+
+	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
+	echo "https://github.com/$upstream_author/rmpp-bt" > \
+		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
+}
+
+# xochitl and the Bluetooth driver start before /home is mounted, so these live in the root file system.
+_rmpp_bt_install() {
+	local s=/home/root/.vellum/share/rmpp-bt
+	install -Dm755 "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so
+	install -Dm644 "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc
+	install -Dm755 "$s"/reconnect /usr/lib/rmpp-bt/reconnect
+	install -Dm644 "$s"/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bluetooth.service
+	install -Dm644 "$s"/rmpp-bt-reconnect.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
+	mkdir -p /usr/lib/systemd/system/multi-user.target.wants /usr/lib/rmpp-preload.d
+	ln -sf ../rmpp-bluetooth.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+	ln -sf /usr/lib/rmpp-bt/librmpp-bt.so /usr/lib/rmpp-preload.d/50-rmpp-bt.so
+	sync
+}
+
+# Restart xochitl to apply. Never `systemctl stop xochitl`: that powers the tablet off.
+_rmpp_restart_xochitl() {
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+}
+
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	_rmpp_bt_install
+	/home/root/.vellum/bin/mount-restore
+	systemctl daemon-reload
+	systemctl start rmpp-bluetooth.service || true
+	_rmpp_restart_xochitl
+}
+
+postupgrade() {
+	postinstall
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here.
+postosupgrade() {
+	_rmpp_bt_install
+}
+
+predeinstall() {
+	/home/root/.vellum/bin/mount-rw
+	rm -f /usr/lib/rmpp-preload.d/50-rmpp-bt.so
+	rm -f /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+	rm -f /usr/lib/systemd/system/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
+	rm -rf /usr/lib/rmpp-bt
+	sync
+	/home/root/.vellum/bin/mount-restore
+	_rmpp_restart_xochitl
+	if [ "$VELLUM_PURGE" = "1" ]; then
+		rm -rf /home/root/.config/rmpp-bt
+	fi
+}
+sha512sums="
+055aeba995c359276a2ca1540e402e6c1df8d847dadd4aedaadeea79023b47e20162c81cbc0395f9aa2765f58b4a85432cc71387f80257875b5e5aac79b6ed90  librmpp-bt.so
+8ce09cc1c5c4ff4e74786b9aaee56db31725cf53b5cc22d641d0754579072a68fe5f48105b45a907aab583bfd2b40383b44a10263c44d56b4253ab1655541228  rmpp-bt.rcc
+900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
+e21a0497314cd0d95b2aee1f1065b5d8e23bc9553f0647cda0ba5480314d3d6b8cfe10096f2d4b6199412cbe36f54c9dce371a8cc6550804687a27cc4fa39e75  rmpp-bluetooth.service
+4569b64ca52adc3a6d331e80c170b901e62093013ffeb133746b965c6c7f4e3672e87b6a6e8a1fe055b61990027a01632e6a2ac4caec3f27a152700d4fa2e39e  rmpp-bt-reconnect.service
+a0b8ba068d0cb6b194f32496ac3ced34d2f6b177792b15de78155a4186cd692aff7d9b32d533682c32a351386770c5c61d95dde8181825a5ef42bd9d0f267023  reconnect
+"
