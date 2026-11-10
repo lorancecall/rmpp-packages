@@ -1,4 +1,4 @@
-# Install Vellum and the rmpp packages (Korean keyboard, Bluetooth) on a reMarkable Paper Pro.
+# Install Vellum and the rmpp packages (Korean keyboard, Bluetooth, Tailscale) on a reMarkable Paper Pro.
 # Runs on Windows 10/11 (PowerShell 5.1 or 7) with the built-in OpenSSH client.
 #
 #   irm https://lorancecall.github.io/rmpp-packages/install-rmpp.ps1 -OutFile install-rmpp.ps1
@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 $Repo = "https://lorancecall.github.io/rmpp-packages"
 $VellumReadme = "https://raw.githubusercontent.com/vellum-dev/vellum-cli/main/README.md"
 $BootstrapUrl = "https://github.com/vellum-dev/vellum-cli/releases/latest/download/bootstrap.sh"
-$Packages = "rmpp-korean rmpp-bt"
+$Packages = "rmpp-korean rmpp-bt rmpp-tailscale"
 $Key = Join-Path $HOME ".ssh\id_ed25519_rmpp"
 
 function Say($m) { Write-Host "`n==> $m" -ForegroundColor Cyan }

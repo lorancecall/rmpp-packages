@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install Vellum and the rmpp packages (Korean keyboard, Bluetooth) on a reMarkable Paper Pro.
+# Install Vellum and the rmpp packages (Korean keyboard, Bluetooth, Tailscale) on a reMarkable Paper Pro.
 # Runs on your computer (Linux or macOS). Needs: ssh, ssh-keygen, curl.
 #
 #   curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o install-rmpp.sh
@@ -12,7 +12,7 @@ set -e
 REPO=https://lorancecall.github.io/rmpp-packages
 VELLUM_README=https://raw.githubusercontent.com/vellum-dev/vellum-cli/main/README.md
 BOOTSTRAP_URL=https://github.com/vellum-dev/vellum-cli/releases/latest/download/bootstrap.sh
-PACKAGES="rmpp-korean rmpp-bt"
+PACKAGES="rmpp-korean rmpp-bt rmpp-tailscale"
 KEY="$HOME/.ssh/id_ed25519_rmpp"
 
 say() { printf '\n==> %s\n' "$*"; }
