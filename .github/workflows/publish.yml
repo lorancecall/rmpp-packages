@@ -51,7 +51,7 @@ jobs:
               for f in *.apk; do apk verify \$f; done
               chown $(id -u):$(id -g) APKINDEX.tar.gz"
           cp keys/lorancecall-rmpp.rsa.pub site/
-          cp install.sh site/
+          cp install.sh installer/install-rmpp.sh installer/install-rmpp.ps1 site/
           ls -la site site/aarch64
 
       - uses: actions/upload-pages-artifact@v3

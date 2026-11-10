@@ -12,7 +12,27 @@ None of them needs xovi, and they keep working after a reboot.
 
 ## Install
 
-You need developer mode, SSH and [Vellum](https://github.com/vellum-dev/vellum-cli) on the tablet. Then, on the tablet:
+Turn on developer mode on the tablet (the root password is in Settings > General > Help > About > Copyrights and licenses), connect it by USB or Wi-Fi, then run the installer on your computer. It logs in with the password once, sets up an SSH key, installs Vellum if it is missing, and installs the packages.
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://lorancecall.github.io/rmpp-packages/install-rmpp.ps1 -OutFile install-rmpp.ps1
+powershell -ExecutionPolicy Bypass -File install-rmpp.ps1
+```
+
+**Linux / macOS:**
+
+```sh
+curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o install-rmpp.sh
+sh install-rmpp.sh
+```
+
+Run the same installer again after a reMarkable OS update.
+
+### Manual install
+
+If Vellum is already on the tablet, run on the tablet:
 
 ```sh
 wget -qO- https://lorancecall.github.io/rmpp-packages/install.sh | sh
@@ -21,7 +41,7 @@ vellum add rmpp-korean rmpp-bt
 
 `install.sh` adds this repository and its signing key (`lorancecall-rmpp.rsa.pub`) to Vellum. Updates come with `vellum upgrade`.
 
-**After a reMarkable OS update**, run `vellum reenable`: an OS update replaces the root file system, where these add-ons live.
+**After a reMarkable OS update**, run `vellum reenable` (the installer does this for you): an OS update replaces the root file system, where these add-ons live.
 
 Remove with `vellum del rmpp-korean rmpp-bt rmpp-preload`.
 
