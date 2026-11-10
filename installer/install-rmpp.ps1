@@ -5,6 +5,7 @@
 #   irm https://lorancecall.github.io/rmpp-packages/install-rmpp.ps1 -OutFile install-rmpp.ps1
 #   powershell -ExecutionPolicy Bypass -File install-rmpp.ps1 [-TabletHost 10.11.99.1] [-Lang ko|en]
 #                                                             [-Packages rmpp-korean,rmpp-bt] [-Yes]
+#   (or the same with pwsh, PowerShell 7)
 #
 #   -Packages  install these without the menu
 #   -Yes       no menu: install every package (or the -Packages list)
