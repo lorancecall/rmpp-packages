@@ -38,17 +38,25 @@ curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o instal
 sh install-rmpp.sh
 ```
 
-After logging in, the installer shows a checkbox menu with a short description of each package, marking those
-already installed: ↑↓ to move, Space to select, **L to switch between Korean and English** (the language starts
-from your system language), Enter to install, Q to quit (nothing is installed).
+After logging in, the installer shows a checkbox menu of all rmpp mods: one line per mod (short description,
+"installed" mark), and the full description of the mod under the cursor below the list. Korean input and
+Bluetooth are selected by default, installed mods stay selected. ↑↓ to move, Space to select, **L to switch
+between Korean and English** (the language starts from your system language), Enter to install, Q to quit
+(nothing is installed).
+
+Besides the packages above, the menu offers [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) (handwriting
+recognition), which is not a Vellum package: the installer downloads it from its GitHub release.
+
+The menu is built from a catalog ([`mods.txt`](mods.txt) plus an `rmpp-mod.conf` in each mod's repository), so
+adding a mod is one line: see [MODS.md](MODS.md).
 
 Options (Windows: add them after `-File install-rmpp.ps1`, with `powershell` or `pwsh`):
 
 | | Linux / macOS | Windows |
 |---|---|---|
 | tablet address | `sh install-rmpp.sh 10.11.99.1` | `-TabletHost 10.11.99.1` |
-| pick packages, no menu | `--packages rmpp-korean,rmpp-bt` | `-Packages rmpp-korean,rmpp-bt` |
-| everything, no questions | `--yes` | `-Yes` |
+| pick mods, no menu | `--packages rmpp-korean,rmpp-bt` | `-Packages rmpp-korean,rmpp-bt` |
+| default selection, no questions | `--yes` | `-Yes` |
 | language | `--lang ko` or `--lang en` | `-Lang ko` or `-Lang en` |
 
 Run the same installer again after a reMarkable OS update.
