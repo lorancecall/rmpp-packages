@@ -29,6 +29,16 @@ curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o instal
 sh install-rmpp.sh
 ```
 
+After logging in, the installer shows a checkbox menu with a short description of each package, marking those
+already installed: ↑↓ to move, Space to select, **L to switch between Korean and English** (the language starts
+from your system language), Enter to install, Q to quit. Without a menu:
+
+| | Linux / macOS | Windows |
+|---|---|---|
+| pick packages | `sh install-rmpp.sh 10.11.99.1 --packages rmpp-korean,rmpp-bt` | `... -File install-rmpp.ps1 -TabletHost 10.11.99.1 -Packages rmpp-korean,rmpp-bt` |
+| everything, no questions | `--yes` | `-Yes` |
+| language | `--lang ko` or `--lang en` | `-Lang ko` or `-Lang en` |
+
 Run the same installer again after a reMarkable OS update.
 
 ### Manual install
