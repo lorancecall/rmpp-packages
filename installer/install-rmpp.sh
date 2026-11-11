@@ -5,7 +5,7 @@
 # Runs on your computer (Linux or macOS). Needs: ssh, ssh-keygen, curl.
 #
 #   curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o install-rmpp.sh
-#   sh install-rmpp.sh [tablet-address] [--lang ko|en] [--packages rmpp-korean,rmpp-bt] [--yes]
+#   sh install-rmpp.sh [tablet-address] [--lang ko|en] [--packages rmpp-bt,rmpp-tailscale] [--yes]
 #
 #   --packages ID,..  install these without the menu
 #   --yes             no menu: install the default selection (or the --packages list)

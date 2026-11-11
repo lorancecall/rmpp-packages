@@ -40,5 +40,5 @@ runs `sh rmpp-install.sh` there as root, then deletes the folder. The script mus
 
 After a reMarkable OS update `/usr/lib` is replaced: running the installer again reinstalls the mod.
 
-Examples: [rmpp-korean](https://github.com/lorancecall/rmpp-korean/blob/main/rmpp-mod.conf) (`vellum`),
+Examples: [rmpp-bt](https://github.com/lorancecall/rmpp-bt/blob/main/rmpp-mod.conf) (`vellum`),
 [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr/blob/main/rmpp-mod.conf) (`release`).
