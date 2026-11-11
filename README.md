@@ -11,14 +11,71 @@ A [Vellum](https://github.com/vellum-dev/vellum) package repository for the reMa
 
 None of them needs xovi, and they keep working after a reboot.
 
+## Before you install: developer mode and SSH
+
+The add-ons are installed over SSH, as the tablet's `root` user. reMarkable only allows that in
+**developer mode**.
+
+### 1. Turn on developer mode
+
+> **Turning developer mode on resets the tablet to factory settings and deletes everything stored on it.**
+> Turning it off again resets it again. Sync your notebooks to the reMarkable cloud (or export them) first.
+
+1. Settings > General > Paper tablet > Software > Advanced > **Developer mode**, and confirm.
+2. The tablet restarts and goes through setup again (language, Wi-Fi, your reMarkable account). Sign in again and
+   let your notebooks sync back.
+3. Open Settings > General > Help > About > **Copyrights and licenses**. Under the GPLv3 compliance notice you find:
+   - the **SSH password** for the `root` user (it can change after an OS update: look it up again if login fails);
+   - the tablet's **IP addresses** (USB and Wi-Fi).
+
+reMarkable's own guide: [developer mode](https://developer.remarkable.com/documentation/developer-mode).
+
+### 2. Connect over SSH
+
+You need an SSH client on the computer: macOS and Linux have one; on Windows 10/11 use the built-in OpenSSH client
+(Settings > Apps > Optional features > OpenSSH Client), from PowerShell or Command Prompt.
+
+**By USB cable** (always works, no Wi-Fi needed): connect the tablet with its USB-C cable and wait a few seconds
+until the computer sees a new network adapter. The tablet is then always at `10.11.99.1`:
+
+```sh
+ssh root@10.11.99.1
+```
+
+**By Wi-Fi**: the computer and the tablet must be on the same network. Use the Wi-Fi address from
+"Copyrights and licenses" (for example `192.168.1.23`):
+
+```sh
+ssh root@192.168.1.23
+```
+
+The first time, SSH asks whether to trust the tablet's key: type `yes`. Then enter the password from step 1 (nothing
+is shown while you type). A prompt like `reMarkable: ~/` means you are on the tablet; `exit` leaves.
+
+The installer below does this login for you once and then sets up an SSH key, so later runs (and `ssh`) need no
+password.
+
+If it does not connect:
+
+- **Connection timed out over Wi-Fi**: the tablet turns Wi-Fi off while it sleeps. Wake it (and unlock it), then
+  try again; or use the USB cable.
+- **A VPN on the computer** (NordVPN, company VPN, ...) often blocks the local network: turn it off, or allow
+  "local network access" in the VPN app.
+- **Permission denied**: the password is wrong or changed after an OS update; read it again in
+  "Copyrights and licenses".
+- **`WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED`** after a factory reset: the tablet has a new key. Remove the
+  old one with `ssh-keygen -R 10.11.99.1` (or the Wi-Fi address) and connect again.
+- **USB, nothing at `10.11.99.1`**: try another cable or port (some cables only charge); on Windows, wait until the
+  "Remote NDIS" network adapter appears.
+
+Careful on the tablet: `systemctl stop xochitl` turns the tablet off; the root file system is read-only unless you
+remount it. The installer and the packages take care of this.
+
 ## Install
 
-1. Turn on developer mode on the tablet: Settings > General > Paper tablet > Software > Advanced > Developer mode.
-   **This resets the tablet and deletes what is on it: sync your notebooks to the cloud first**
-   ([reMarkable developer documentation](https://developer.remarkable.com/documentation/developer-mode)).
-2. The root password is then shown in Settings > General > Help > About > Copyrights and licenses.
-3. Connect the tablet by USB (address `10.11.99.1`) or Wi-Fi, then run the installer on your computer. It logs in
-   with the password once, sets up an SSH key, installs Vellum if it is missing, and installs the packages you pick.
+With developer mode on and the tablet reachable over SSH ([see above](#before-you-install-developer-mode-and-ssh)),
+run the installer on your computer. It logs in with the root password once, sets up an SSH key, installs Vellum if
+it is missing, and installs the packages you pick.
 
 **Windows**, in PowerShell. Both Windows PowerShell 5.1 (`powershell`, built into Windows 10/11) and
 PowerShell 7 (`pwsh`, if you installed it) work; use either line 2:
