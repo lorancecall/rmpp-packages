@@ -10,6 +10,7 @@
 #   --packages ID,..  install these without the menu
 #   --yes             no menu: install the default selection (or the --packages list)
 #   --catalog DIR     use the rmpp-mod.conf files in DIR (*.conf, in name order) instead of the online catalog
+#   --list            print the mods (and add-ons) of the catalog and exit
 #
 # Before you start, turn on developer mode on the tablet. The root password is shown in
 # Settings > General > Help > About > Copyrights and licenses.
@@ -20,7 +21,7 @@ VELLUM_README=https://raw.githubusercontent.com/vellum-dev/vellum-cli/main/READM
 BOOTSTRAP_URL=https://github.com/vellum-dev/vellum-cli/releases/latest/download/bootstrap.sh
 KEY="$HOME/.ssh/id_ed25519_rmpp"
 
-HOST="" LANG_UI="" PICK="" YES="" CATALOG_DIR=""
+HOST="" LANG_UI="" PICK="" YES="" CATALOG_DIR="" LIST=""
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--lang) LANG_UI=$2; shift ;;
@@ -29,6 +30,7 @@ while [ $# -gt 0 ]; do
 		--packages=*) PICK=$(echo "${1#*=}" | tr ',' ' ') ;;
 		--catalog) CATALOG_DIR=$2; shift ;;
 		--yes|-y) YES=1 ;;
+		--list) LIST=1 ;;
 		-*) echo "unknown option $1" >&2; exit 2 ;;
 		*) HOST=$1 ;;
 	esac
@@ -142,6 +144,32 @@ else
 fi
 NMODS=$n
 cf() { sed -n "s/^$2=//p" "$CAT/$1.conf" | head -n 1; }      # cf <n> <key>
+# Add-ons: a mod's `addons=` names a file (URL, or a file next to --catalog confs) of more rmpp-mod.conf blocks,
+# separated by lines `---`. They are listed right under the mod (parent=<id>, label shown instead of the id).
+i=1 m=0
+while [ $i -le $NMODS ]; do
+	m=$((m + 1)); cp "$CAT/$i.conf" "$CAT/m$m.conf"; cp "$CAT/$i.repo" "$CAT/m$m.repo"
+	a=$(cf $i addons)
+	if [ -n "$a" ]; then
+		case "$a" in
+			http*) curl -fsSL "$a" -o "$CAT/addons.txt" 2>/dev/null || : > "$CAT/addons.txt" ;;
+			*) tr -d '\r' < "$CATALOG_DIR/$a" > "$CAT/addons.txt" 2>/dev/null || : > "$CAT/addons.txt" ;;
+		esac
+		tr -d '\r' < "$CAT/addons.txt" | awk -v dir="$CAT" -v start=$m -v parent="$(cf $i id)" '
+			/^---/ { if (open) { print "parent=" parent >> f; close(f) }; open = 0; next }
+			/^[ \t]*(#|$)/ { next }
+			{ if (!open) { n++; f = dir "/a" (start + n) ".conf"; open = 1 } print >> f }
+			END { if (open) print "parent=" parent >> f }'
+		j=$((m + 1))
+		while [ -f "$CAT/a$j.conf" ]; do
+			m=$((m + 1)); mv "$CAT/a$j.conf" "$CAT/m$m.conf"; cp "$CAT/$i.repo" "$CAT/m$m.repo"; j=$((j + 1))
+		done
+	fi
+	i=$((i + 1))
+done
+i=1
+while [ $i -le $m ]; do mv "$CAT/m$i.conf" "$CAT/$i.conf"; mv "$CAT/m$i.repo" "$CAT/$i.repo"; i=$((i + 1)); done
+NMODS=$m
 idx() { i=1; while [ $i -le $NMODS ]; do [ "$(cf $i id)" = "$1" ] && { echo $i; return; }; i=$((i + 1)); done; }
 ALL=""; DEFAULTS=""
 i=1
@@ -150,6 +178,14 @@ while [ $i -le $NMODS ]; do
 	[ "$(cf $i default)" = 1 ] && DEFAULTS="$DEFAULTS $(cf $i id)"
 	i=$((i + 1))
 done
+if [ -n "$LIST" ]; then
+	i=1
+	while [ $i -le $NMODS ]; do
+		printf '%s\t%s\t%s\t%s\n' "$(cf $i id)" "$(cf $i parent)" "$(cf $i package)" "$(cf $i short_$LANG_UI)"
+		i=$((i + 1))
+	done
+	exit 0
+fi
 
 # ---------------------------------------------------------------- checkbox menu
 # Plain POSIX sh: the terminal is put in raw mode and keys are read byte by byte with dd.
@@ -184,7 +220,8 @@ menu() {   # $1 = installed ids; sets SELECTED
 			s=$(echo $sel | cut -d' ' -f$i)
 			box="[ ]"; [ "$s" = 1 ] && box="[x]"
 			st=""; case " $1 " in *" $p "*) st="  ($(m installed))" ;; esac
-			row="$(pad "$p" 17) $(pad "$(cf $i short_$LANG_UI)" 38)$st"
+			label=$(cf $i label); [ -n "$label" ] && label="  $label"
+			row="$(pad "${label:-$p}" 17) $(pad "$(cf $i short_$LANG_UI)" 38)$st"
 			if [ $i = $cur ]; then printf '  \033[7m> %s %s\033[0m\n' "$box" "$row"
 			else printf '    %s %s\n' "$box" "$row"; fi
 			i=$((i + 1))

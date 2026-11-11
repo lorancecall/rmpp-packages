@@ -13,6 +13,8 @@ KEY=lorancecall-rmpp
 mkdir -p ~/.config/vbuild "$ROOT/dist/$ARCH"
 cp "$ROOT/keys/$KEY.rsa" "$ROOT/keys/$KEY.rsa.pub" ~/.config/vbuild/
 SOURCE_DATE_EPOCH=$(git -C "$ROOT" log -1 --format=%ct -- "packages/$PACKAGE")
+# generated packages (scripts/lang-addons.py) are not in git: use the time of their source pin
+[ -n "$SOURCE_DATE_EPOCH" ] || SOURCE_DATE_EPOCH=$(git -C "$ROOT" log -1 --format=%ct -- lang-addons.conf)
 WORK=$(mktemp -d)
 cp -r "$DIR/." "$WORK"
 SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH VBUILD_KEY_NAME=$KEY CARCH=$ARCH vbuild -C "$WORK" all
