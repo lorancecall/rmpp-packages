@@ -5,22 +5,17 @@ pkgver=0.1.0
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"
-pkgdesc="Languages: Korean keyboard, keyboard switching, fonts per language (typed text too); add-ons for more languages"
+pkgdesc="Languages: keyboard switching and fonts per language (typed text too); languages are add-ons (rmpp-lang-ko, ...)"
 url="https://github.com/lorancecall/rmpp-lang"
 arch="aarch64"
-license="GPL-3.0-only AND OFL-1.1"
+license="GPL-3.0-only"
 depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
 replaces="rmpp-korean"
-_fonts_commit="165c01b46ea533872e002e0785ff17e44f6d97d8"
-_fonts_license_commit="a99a4354c68964f6bfac488d01010b1fb6d9178a"
 source="
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/librmpp-lang.so
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/rmpp-lang.rcc
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/rmpp-lang
 https://raw.githubusercontent.com/$upstream_author/rmpp-lang/v$pkgver/LICENSE
-NotoSansCJKkr-Regular.otf::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_commit/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf
-NotoSansCJKkr-Bold.otf::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_commit/Sans/OTF/Korean/NotoSansCJKkr-Bold.otf
-OFL-LICENSE::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_license_commit/Sans/LICENSE
 "
 options="!check !fhs !strip"
 
@@ -34,13 +29,7 @@ package() {
 	install -Dm644 "$srcdir"/rmpp-lang.rcc "$pkgdir"/home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc
 	install -Dm755 "$srcdir"/rmpp-lang "$pkgdir"/home/root/.vellum/share/rmpp-lang/rmpp-lang
 
-	install -Dm644 "$srcdir"/NotoSansCJKkr-Regular.otf \
-		"$pkgdir"/home/root/.local/share/fonts/rmpp-lang/ko/NotoSansCJKkr-Regular.otf
-	install -Dm644 "$srcdir"/NotoSansCJKkr-Bold.otf \
-		"$pkgdir"/home/root/.local/share/fonts/rmpp-lang/ko/NotoSansCJKkr-Bold.otf
-
 	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
-	install -Dm644 "$srcdir"/OFL-LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/OFL-LICENSE
 	echo "https://github.com/$upstream_author/rmpp-lang" > \
 		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
 }
@@ -56,10 +45,7 @@ postinstall() {
 	# rmpp-korean 0.1.0: both libraries would compose Hangul twice
 	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
 	rm -rf /usr/lib/rmpp-korean
-	# Keep the behaviour of rmpp-korean (it had no settings file)
-	[ -f /home/root/.config/rmpp-lang/lang.conf ] || { mkdir -p /home/root/.config/rmpp-lang
-		printf 'languages=ko,en\nkeyboard.ko=1\n' > /home/root/.config/rmpp-lang/lang.conf; }
-	# Fonts a user dropped next to rmpp-korean's
+	# Fonts a user dropped next to rmpp-korean's (Korean itself comes with the add-on rmpp-lang-ko)
 	mkdir -p /home/root/.local/share/fonts/rmpp-lang/ko
 	if [ -d /home/root/.local/share/fonts/rmpp-korean ]; then
 		for f in /home/root/.local/share/fonts/rmpp-korean/*.[ot]t[fc]; do
@@ -123,7 +109,4 @@ TODO  librmpp-lang.so
 TODO  rmpp-lang.rcc
 TODO  rmpp-lang
 TODO  LICENSE
-5010e4db7b2851702a867af2fdc1ff26d1652cd91c04421d2c62f39a2f208694c1d889957e382c72cc340ba9b4f48b0ebffbc5e880be63a8301cbcd28a59f23c  NotoSansCJKkr-Regular.otf
-c08f86b5553f42b773ce0c4313e4a496170f16139ab2bc5e63ab9714a99b0a1954b755b94ac508f35606decf42bdf0f9a64e8cd1f08dca0ba9245752d5e3fb02  NotoSansCJKkr-Bold.otf
-53cf33ddac5d44b9f622a041f267bcf53ca704555f0481ee3e89eeba505019c8d1d504a6ffe7ebd6a7d1d5d7d26cf3da052cc63b3540eb4260ce74a93cf35841  OFL-LICENSE
 "

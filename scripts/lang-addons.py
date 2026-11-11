@@ -22,7 +22,7 @@ import textwrap
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RESERVED = {"ko", "en", "latin"}          # part of the rmpp-lang core
+RESERVED = {"en", "latin"}                # part of the rmpp-lang core; every other language is an add-on
 
 
 def conf(path):
@@ -161,6 +161,7 @@ def main():
             "keyboard" if c.get("input", "none") != "none" else "fonts")
         blocks.append("\n".join([
             f"id=rmpp-lang-{code}", "type=vellum", f"package=rmpp-lang-{code}", "needs=rmpp-lang",
+            *(["default=1"] if c.get("default") == "1" else []),   # preselected in the installer menu
             f"label=└ {code} {c.get('name', code)}",
             f"short_ko={short(c.get('summary_ko', c.get('name', code)))}",
             f"short_en={short(c.get('summary_en', c.get('name', code) + ' ' + kind_en))}",

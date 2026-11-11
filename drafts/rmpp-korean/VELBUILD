@@ -1,5 +1,5 @@
 # DRAFT (see drafts/README.md): replaces packages/rmpp-korean/VELBUILD when rmpp-lang is published.
-# Transitional package: `vellum upgrade` moves rmpp-korean users to rmpp-lang. No files of its own; apk removes
+# Transitional package: `vellum upgrade` moves rmpp-korean users to rmpp-lang with its Korean add-on. No files of its own; apk removes
 # 0.1.0's files, rmpp-lang's postinstall removes 0.1.0's /usr/lib/rmpp-korean and preload link.
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-korean
@@ -11,7 +11,7 @@ pkgdesc="Renamed to rmpp-lang (installs it); this package can be removed"
 url="https://github.com/lorancecall/rmpp-lang"
 arch="noarch"
 license="GPL-3.0-only"
-depends="rmpp-lang"
+depends="rmpp-lang rmpp-lang-ko"
 source=""
 options="!check !fhs !strip"
 
