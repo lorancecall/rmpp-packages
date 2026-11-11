@@ -1,4 +1,3 @@
-# DRAFT (see drafts/README.md): moves to packages/rmpp-lang/ when rmpp-lang v0.1.0 is released; fill in sha512sums.
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang
 pkgver=0.1.0
@@ -92,8 +91,8 @@ predeinstall() {
 	/home/root/.vellum/bin/mount-restore
 }
 sha512sums="
-TODO  librmpp-lang.so
-TODO  rmpp-lang.rcc
-TODO  rmpp-lang
-TODO  LICENSE
+377e950b3efc80bbdf4e3c9811f2560008d00755a7bf45d545633a664717fa7ee9a1d82059edd1b33d274109d13a449455c0461377e6adc0dee9d29b8655c6ce  librmpp-lang.so
+b819c077a161407413cf2bcbf56d8fb74ac0ecdebc5a7caa8639c9b6e53a912e9036ce7179775d5dd68adbce256a549195f9adc02ff1a2bdf11250331e52ae9d  rmpp-lang.rcc
+e52179aea0529c5847d5cb6b5da0d9520d970dcaae4a0ddbb147de0b8a0a4c37ca72a54f73dee0408e5e9e5f1319b18dbaf9d4bc36b471ed0297a8544b8d9221  rmpp-lang
+900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
 "

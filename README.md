@@ -4,13 +4,14 @@ A [Vellum](https://github.com/vellum-dev/vellum) package repository for the reMa
 
 | Package | What it does |
 |---|---|
+| `rmpp-lang` | Languages: on-screen, Bluetooth, USB and Type Folio keyboards and fonts per language (Settings > Languages); each language is an add-on package `rmpp-lang-<code>` (`rmpp-lang-ko` Korean, `rmpp-lang-ja`, `rmpp-lang-zh`, `rmpp-lang-ru`) |
 | `rmpp-bt` | Bluetooth page in Settings (search, pair, connect, forget), Bluetooth toggle in quick settings, Bluetooth on at boot, per-keyboard "Type Folio mode" |
 | `rmpp-tailscale` | Tailscale with a Settings page: on/off, log in by scanning a QR code, status and tailnet devices, updates; SSH to the tablet over Tailscale (userspace networking, ~70 MB in /home) |
 | `rmpp-refresh` | "Refresh screen" button in the notebook toolbar's convert menu: one tap redraws the whole screen and clears ghosting |
 | `rmpp-preload` | Loads the add-ons above into xochitl at boot; keeps xovi working if you use it (installed automatically) |
 
-None of them needs xovi, and they keep working after a reboot. Korean input (formerly `rmpp-korean`) is being
-replaced by `rmpp-lang` (languages, keyboards and fonts per language) and is not offered until it is released.
+None of them needs xovi, and they keep working after a reboot. `rmpp-lang` replaces the old `rmpp-korean`:
+remove that one first (`vellum del rmpp-korean`), then install `rmpp-lang rmpp-lang-ko`.
 
 ## Before you install: developer mode and SSH
 
@@ -103,8 +104,8 @@ sh install-rmpp.sh
 ```
 
 After logging in, the installer shows a checkbox menu of all rmpp mods: one line per mod (short description,
-"installed" mark), and the full description of the mod under the cursor below the list. Bluetooth is
-selected by default, installed mods stay selected. ↑↓ to move, Space to select, **L to switch
+"installed" mark), and the full description of the mod under the cursor below the list. Languages (with
+Korean) and Bluetooth are selected by default, installed mods stay selected. ↑↓ to move, Space to select, **L to switch
 between Korean and English** (the language starts from your system language), Enter to install, Q to quit
 (nothing is installed).
 
