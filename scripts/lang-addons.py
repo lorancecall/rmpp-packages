@@ -180,7 +180,9 @@ def main():
             repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), min_core=c.get("min_core", "0.1.0"),
             requires="".join(f" {p}" for p in req_pkgs),
             desc=c.get("summary_en", c.get("name", code)).replace('"', "'"),
-            license="GPL-3.0-only" + (" AND custom" if has_fonts else ""),
+            # extra licenses of bundled data (dictionaries...), per add-on in lang-addons.conf: license.<code>=
+            license="GPL-3.0-only" + "".join(f" AND {x}" for x in cfg.get(f"license.{code}", "").split())
+                    + (" AND custom" if has_fonts else ""),
             sources="\n".join(files), sums=sums,
             rcc_note=(f"\n# and {code}.rcc (keyboard layouts), copied to /usr/lib/rmpp-lang/languages/: xochitl loads it"
                       " at start, before /home is mounted" if rcc.exists() else ""),
