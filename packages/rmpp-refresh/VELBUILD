@@ -1,0 +1,72 @@
+maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
+pkgname=rmpp-refresh
+pkgver=0.1.0
+pkgrel=0
+upstream_author="lorancecall"
+category="ui"
+pkgdesc="Refresh screen button in the notebook toolbar: a full e-paper refresh that clears ghosting"
+url="https://github.com/lorancecall/rmpp-refresh"
+arch="aarch64"
+license="GPL-3.0-only"
+depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
+source="
+https://github.com/$upstream_author/rmpp-refresh/releases/download/v$pkgver/librmpp-refresh.so
+https://raw.githubusercontent.com/$upstream_author/rmpp-refresh/v$pkgver/LICENSE
+"
+options="!check !fhs !strip"
+
+# Each lifecycle function runs as its own script: no shared helpers, every step is written out.
+# Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+
+package() {
+	install -Dm755 "$srcdir"/librmpp-refresh.so "$pkgdir"/home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so
+	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
+	echo "https://github.com/$upstream_author/rmpp-refresh" > "$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
+}
+
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	mkdir -p /usr/lib/rmpp-refresh /usr/lib/rmpp-preload.d
+	cp /home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-refresh/librmpp-refresh.so.new && chmod 755 /usr/lib/rmpp-refresh/librmpp-refresh.so.new && mv -f /usr/lib/rmpp-refresh/librmpp-refresh.so.new /usr/lib/rmpp-refresh/librmpp-refresh.so
+	ln -sf /usr/lib/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
+	sync
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
+}
+
+postupgrade() {
+	/home/root/.vellum/bin/mount-rw
+	mkdir -p /usr/lib/rmpp-refresh /usr/lib/rmpp-preload.d
+	cp /home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-refresh/librmpp-refresh.so.new && chmod 755 /usr/lib/rmpp-refresh/librmpp-refresh.so.new && mv -f /usr/lib/rmpp-refresh/librmpp-refresh.so.new /usr/lib/rmpp-refresh/librmpp-refresh.so
+	ln -sf /usr/lib/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
+	sync
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here.
+postosupgrade() {
+	mkdir -p /usr/lib/rmpp-refresh /usr/lib/rmpp-preload.d
+	cp /home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-refresh/librmpp-refresh.so.new && chmod 755 /usr/lib/rmpp-refresh/librmpp-refresh.so.new && mv -f /usr/lib/rmpp-refresh/librmpp-refresh.so.new /usr/lib/rmpp-refresh/librmpp-refresh.so
+	ln -sf /usr/lib/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
+	sync
+}
+
+predeinstall() {
+	/home/root/.vellum/bin/mount-rw
+	rm -f /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
+	rm -rf /usr/lib/rmpp-refresh
+	sync
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
+}
+sha512sums="
+07d548fbb6b00d69d3461f2bad07fe30350d946cd183cb422cd40c8e57e6e62690552d52b00b8d9071f8d2a42521f72a841974356fab49f79819f747e9f0f65f  librmpp-refresh.so
+900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
+"
