@@ -1,6 +1,5 @@
 # Mods the rmpp installer offers, in menu order: one GitHub repository per line (owner/name).
 # Each repository describes itself in rmpp-mod.conf (see MODS.md). Lines starting with # are ignored.
-lorancecall/rmpp-korean
 lorancecall/rmpp-bt
 lorancecall/rmpp-tailscale
 lorancecall/rmpp-hwr

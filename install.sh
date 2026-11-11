@@ -9,4 +9,4 @@ mkdir -p "$V/etc/apk/keys"
 wget -qO "$V/etc/apk/keys/lorancecall-rmpp.rsa.pub" "$REPO/lorancecall-rmpp.rsa.pub"
 grep -qxF "$REPO" "$V/etc/apk/repositories" || echo "$REPO" >> "$V/etc/apk/repositories"
 "$V/bin/vellum" update
-echo "Added $REPO. Install with:  vellum add rmpp-korean rmpp-bt rmpp-tailscale"
+echo "Added $REPO. Install with:  vellum add rmpp-bt rmpp-tailscale rmpp-refresh"
