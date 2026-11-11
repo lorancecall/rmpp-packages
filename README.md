@@ -85,6 +85,10 @@ With developer mode on and the tablet reachable over SSH ([see above](#before-yo
 run the installer on your computer. It logs in with the root password once, sets up an SSH key, installs Vellum if
 it is missing, and installs the packages you pick.
 
+**Desktop app** (Windows, macOS, Linux): the same steps in a window, no terminal needed. Download *rmpp setup* from
+the [releases](https://github.com/lorancecall/rmpp-packages/releases) (tags `app-v*`); see [app/README.md](app/README.md)
+for the first-run warning of an unsigned app. Or use the scripts below.
+
 **Windows**, in PowerShell. Both Windows PowerShell 5.1 (`powershell`, built into Windows 10/11) and
 PowerShell 7 (`pwsh`, if you installed it) work; use either line 2:
 
