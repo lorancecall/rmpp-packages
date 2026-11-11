@@ -60,6 +60,17 @@ def short(summary):
     return s if len(s) <= 34 else s[:33] + "…"
 
 
+def pkgdesc(text):
+    """apk pkgdesc: one line under 128 (abuild refuses longer; counted in UTF-8 bytes to be safe), cut at a word."""
+    s = " ".join(text.replace('"', "'").split())
+    if len(s.encode()) < 128:
+        return s
+    words = s.split(" ")
+    while words and len((" ".join(words) + " ...").encode()) > 127:
+        words.pop()
+    return " ".join(words).rstrip(",;:") + " ..."
+
+
 def wrap(text):
     return "|".join(textwrap.wrap(text, 60)[:3])
 
@@ -179,7 +190,7 @@ def main():
         (out / "VELBUILD").write_text(VELBUILD.format(
             repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), min_core=c.get("min_core", "0.1.0"),
             requires="".join(f" {p}" for p in req_pkgs),
-            desc=c.get("summary_en", c.get("name", code)).replace('"', "'"),
+            desc=pkgdesc(c.get("summary_en", c.get("name", code))),
             # extra licenses of bundled data (dictionaries...), per add-on in lang-addons.conf: license.<code>=
             license="GPL-3.0-only" + "".join(f" AND {x}" for x in cfg.get(f"license.{code}", "").split())
                     + (" AND custom" if has_fonts else ""),
