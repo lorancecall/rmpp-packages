@@ -14,62 +14,68 @@ None of them needs xovi, and they keep working after a reboot.
 ## Before you install: developer mode and SSH
 
 The add-ons are installed over SSH, as the tablet's `root` user. reMarkable only allows that in
-**developer mode**.
+**developer mode**. Source for this section: reMarkable's
+[developer mode guide](https://developer.remarkable.com/documentation/developer-mode).
 
 ### 1. Turn on developer mode
 
-> **Turning developer mode on resets the tablet to factory settings and deletes everything stored on it.**
-> Turning it off again resets it again. Sync your notebooks to the reMarkable cloud (or export them) first.
+> **Turning developer mode on performs a factory reset: everything stored on the tablet is deleted.**
+> Sync your notebooks to your reMarkable cloud account first. Developer mode then stays on; turning it off again
+> needs reMarkable's recovery application (see the guide's "Recovery Mode" section).
 
-1. Settings > General > Paper tablet > Software > Advanced > **Developer mode**, and confirm.
-2. The tablet restarts and goes through setup again (language, Wi-Fi, your reMarkable account). Sign in again and
-   let your notebooks sync back.
-3. Open Settings > General > Help > About > **Copyrights and licenses**. Under the GPLv3 compliance notice you find:
-   - the **SSH password** for the `root` user (it can change after an OS update: look it up again if login fails);
-   - the tablet's **IP addresses** (USB and Wi-Fi).
-
-reMarkable's own guide: [developer mode](https://developer.remarkable.com/documentation/developer-mode).
+1. Settings > General > Paper Tablet > Software > Advanced > **Developer Mode**, and confirm.
+2. After the reset, set the tablet up again (language, Wi-Fi, your reMarkable account) and let your notebooks sync
+   back. From now on a developer-mode warning is shown on every start; this is normal.
+3. Open Settings > General > Help > About > **Copyrights and Licenses**. Under "General Information" you find the
+   SSH user name (`root`) and its password (randomly generated).
 
 ### 2. Connect over SSH
 
 You need an SSH client on the computer: macOS and Linux have one; on Windows 10/11 use the built-in OpenSSH client
 (Settings > Apps > Optional features > OpenSSH Client), from PowerShell or Command Prompt.
 
-**By USB cable** (always works, no Wi-Fi needed): connect the tablet with its USB-C cable and wait a few seconds
-until the computer sees a new network adapter. The tablet is then always at `10.11.99.1`:
+**By USB cable** (works right away): connect the tablet with its USB-C cable. An ethernet-over-USB network
+connection appears on the computer after a few seconds, and the tablet is at `10.11.99.1`:
 
 ```sh
 ssh root@10.11.99.1
 ```
 
-**By Wi-Fi**: the computer and the tablet must be on the same network. Use the Wi-Fi address from
-"Copyrights and licenses" (for example `192.168.1.23`):
+The first time, SSH asks whether to trust the tablet's key: type `yes`. Then enter the password from step 1
+(nothing is shown while you type). A prompt ending in `#` means you are on the tablet; `exit` leaves.
+
+**By Wi-Fi**: SSH over Wi-Fi is **off by default**. Turn it on once, over the USB connection:
 
 ```sh
-ssh root@192.168.1.23
+ssh root@10.11.99.1 rm-ssh-over-wlan on
 ```
 
-The first time, SSH asks whether to trust the tablet's key: type `yes`. Then enter the password from step 1 (nothing
-is shown while you type). A prompt like `reMarkable: ~/` means you are on the tablet; `exit` leaves.
+(`rm-ssh-over-wlan off` turns it off again.) The computer and the tablet must be on the same network. Find the
+tablet's Wi-Fi address in your router's list of devices, or ask the tablet over USB:
 
-The installer below does this login for you once and then sets up an SSH key, so later runs (and `ssh`) need no
+```sh
+ssh root@10.11.99.1 ip -4 addr show wlan0
+```
+
+then connect to that address, for example `ssh root@192.168.1.23`.
+
+The installer below does the password login once and then sets up an SSH key, so later runs (and `ssh`) need no
 password.
 
 If it does not connect:
 
-- **Connection timed out over Wi-Fi**: the tablet turns Wi-Fi off while it sleeps. Wake it (and unlock it), then
-  try again; or use the USB cable.
-- **A VPN on the computer** (NordVPN, company VPN, ...) often blocks the local network: turn it off, or allow
+- **Wi-Fi: connection refused or timed out**: turn on SSH over Wi-Fi first (`rm-ssh-over-wlan on`, above). If it
+  worked before, wake and unlock the tablet (it may be asleep) and try again, or use the USB cable.
+- **A VPN on the computer** (NordVPN, a company VPN, ...) can block the local network: turn it off, or allow
   "local network access" in the VPN app.
-- **Permission denied**: the password is wrong or changed after an OS update; read it again in
-  "Copyrights and licenses".
+- **Permission denied**: check the password again in Copyrights and Licenses (it is case-sensitive).
 - **`WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED`** after a factory reset: the tablet has a new key. Remove the
   old one with `ssh-keygen -R 10.11.99.1` (or the Wi-Fi address) and connect again.
-- **USB, nothing at `10.11.99.1`**: try another cable or port (some cables only charge); on Windows, wait until the
-  "Remote NDIS" network adapter appears.
+- **USB: nothing at `10.11.99.1`**: try another cable or port (some USB-C cables only charge) and wait until the
+  new network connection appears on the computer.
 
-Careful on the tablet: `systemctl stop xochitl` turns the tablet off; the root file system is read-only unless you
-remount it. The installer and the packages take care of this.
+Careful on the tablet: `systemctl stop xochitl` turns the tablet off, and the root file system is read-only unless
+you remount it. The installer and the packages take care of this.
 
 ## Install
 
