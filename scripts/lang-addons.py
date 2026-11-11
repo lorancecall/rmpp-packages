@@ -60,6 +60,17 @@ def short(summary):
     return s if len(s) <= 34 else s[:33] + "…"
 
 
+def pkgdesc(text):
+    """apk pkgdesc: one line under 128 (abuild refuses longer; counted in UTF-8 bytes to be safe), cut at a word."""
+    s = " ".join(text.replace('"', "'").split())
+    if len(s.encode()) < 128:
+        return s
+    words = s.split(" ")
+    while words and len((" ".join(words) + " ...").encode()) > 127:
+        words.pop()
+    return " ".join(words).rstrip(",;:") + " ..."
+
+
 def wrap(text):
     return "|".join(textwrap.wrap(text, 60)[:3])
 
@@ -76,7 +87,7 @@ pkgdesc="{desc}"
 url="https://github.com/{repo}/tree/{ref}/languages/{code}"
 arch="noarch"
 license="{license}"
-depends="rmpp-lang>={min_core}"
+depends="rmpp-lang>={min_core}{requires}"
 source="
 {sources}
 "
@@ -160,6 +171,13 @@ def main():
         if rcc.exists():
             shutil.copy(rcc, out / rcc.name)
             files.append(rcc.name)
+        # requires=ko,...: other add-ons this one needs (e.g. ja/zh typed in Hangul need ko). Only the plain key
+        # counts; per-input-method overrides (requires@<method>=) are for the core at run time.
+        requires = [r.strip() for r in c.get("requires", "").split(",") if r.strip()]
+        unknown = [r for r in requires if r not in codes or r == code]
+        if unknown:
+            sys.exit(f"languages/{code}/language.conf: requires= names unknown add-ons: {', '.join(unknown)}")
+        req_pkgs = [f"rmpp-lang-{r}" for r in requires]
         fonts_license = (built / "LICENSE-fonts").exists()
         has_fonts = (built / "fonts").is_dir()
         sums = "\n".join(f"{hashlib.sha512((out / f).read_bytes()).hexdigest()}  {f}" for f in files)
@@ -171,8 +189,11 @@ def main():
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
             repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), min_core=c.get("min_core", "0.1.0"),
-            desc=c.get("summary_en", c.get("name", code)).replace('"', "'"),
-            license="GPL-3.0-only" + (" AND custom" if has_fonts else ""),
+            requires="".join(f" {p}" for p in req_pkgs),
+            desc=pkgdesc(c.get("summary_en", c.get("name", code))),
+            # extra licenses of bundled data (dictionaries...), per add-on in lang-addons.conf: license.<code>=
+            license="GPL-3.0-only" + "".join(f" AND {x}" for x in cfg.get(f"license.{code}", "").split())
+                    + (" AND custom" if has_fonts else ""),
             sources="\n".join(files), sums=sums,
             rcc_note=(f"\n# and {code}.rcc (keyboard layouts), copied to /usr/lib/rmpp-lang/languages/: xochitl loads it"
                       " at start, before /home is mounted" if rcc.exists() else ""),
@@ -184,7 +205,7 @@ def main():
         kind_en = "keyboard and fonts" if c.get("input", "none") != "none" and has_fonts else (
             "keyboard" if c.get("input", "none") != "none" else "fonts")
         blocks.append("\n".join([
-            f"id=rmpp-lang-{code}", "type=vellum", f"package=rmpp-lang-{code}", "needs=rmpp-lang",
+            f"id=rmpp-lang-{code}", "type=vellum", f"package=rmpp-lang-{code}", "needs=" + " ".join(["rmpp-lang", *req_pkgs]),
             *(["default=1"] if c.get("default") == "1" else []),   # preselected in the installer menu
             f"label=└ {code} {c.get('name', code)}",
             f"short_ko={short(c.get('summary_ko', c.get('name', code)))}",

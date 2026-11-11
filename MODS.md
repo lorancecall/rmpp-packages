@@ -41,7 +41,9 @@ with the keys above plus:
 rmpp-lang's list is generated in CI: `scripts/lang-addons.py` builds a package `rmpp-lang-<code>` for each
 `languages/<code>/` of the rmpp-lang repository (repository and ref in `lang-addons.conf`) and publishes the list
 as `https://lorancecall.github.io/rmpp-packages/addons/rmpp-lang.txt`. Adding a language is a folder in
-rmpp-lang; nothing changes here. With `--catalog DIR` (`-Catalog`), `addons` may also name a file in DIR.
+rmpp-lang; nothing changes here. An add-on's `language.conf` may say `requires=ko` (comma list of other add-on
+codes, e.g. Japanese typed in Hangul needs `ko`): its package then depends on `rmpp-lang-ko` and its `needs` lists
+it too (per-input-method `requires@<method>=` lines are read by rmpp-lang at run time, not here). With `--catalog DIR` (`-Catalog`), `addons` may also name a file in DIR.
 `--list` (`-List`) prints the catalog, add-ons included, and exits.
 
 ## How a `release` mod is installed
