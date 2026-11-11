@@ -9,8 +9,8 @@ pkgdesc="Languages: keyboard switching and fonts per language (typed text too); 
 url="https://github.com/lorancecall/rmpp-lang"
 arch="aarch64"
 license="GPL-3.0-only"
-depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
-replaces="rmpp-korean"
+# !rmpp-korean: the old Korean add-on would compose Hangul a second time (remove it first: vellum del rmpp-korean)
+depends="rmpp-preload !rm1 !rm2 !rmpp-korean mount-utils remarkable-os>=3.29 remarkable-os<3.30"
 source="
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/librmpp-lang.so
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/rmpp-lang.rcc
@@ -42,17 +42,6 @@ postinstall() {
 	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
 	mkdir -p /usr/lib/rmpp-preload.d
 	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
-	# rmpp-korean 0.1.0: both libraries would compose Hangul twice
-	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
-	rm -rf /usr/lib/rmpp-korean
-	# Fonts a user dropped next to rmpp-korean's (Korean itself comes with the add-on rmpp-lang-ko)
-	mkdir -p /home/root/.local/share/fonts/rmpp-lang/ko
-	if [ -d /home/root/.local/share/fonts/rmpp-korean ]; then
-		for f in /home/root/.local/share/fonts/rmpp-korean/*.[ot]t[fc]; do
-			[ -e "$f" ] && mv -n "$f" /home/root/.local/share/fonts/rmpp-lang/ko/
-		done
-		rmdir /home/root/.local/share/fonts/rmpp-korean 2>/dev/null || true
-	fi
 	sync
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
@@ -69,8 +58,6 @@ postupgrade() {
 	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
 	mkdir -p /usr/lib/rmpp-preload.d
 	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
-	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
-	rm -rf /usr/lib/rmpp-korean
 	sync
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
