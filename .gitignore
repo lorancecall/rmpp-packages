@@ -1,3 +1,5 @@
 dist/
 site/
 keys/*.rsa
+packages/rmpp-lang-*/
+site-addons/

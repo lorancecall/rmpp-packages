@@ -11,11 +11,13 @@
 #   -Packages  install these mods without the menu
 #   -Yes       no menu: install the default selection (or the -Packages list)
 #   -Catalog   folder with rmpp-mod.conf files (*.conf, in name order) instead of the online catalog
+#   -List      print the mods (and add-ons) of the catalog and exit
 #
 # Before you start, turn on developer mode on the tablet. The root password is shown in
 # Settings > General > Help > About > Copyrights and licenses.
 # (Saved as UTF-8 with BOM so that Windows PowerShell 5.1 reads the Korean text correctly.)
-param([string]$TabletHost = "", [string]$Lang = "", [string[]]$Packages = @(), [switch]$Yes, [string]$Catalog = "")
+param([string]$TabletHost = "", [string]$Lang = "", [string[]]$Packages = @(), [switch]$Yes, [string]$Catalog = "",
+      [switch]$List)
 
 $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
@@ -105,8 +107,38 @@ if ($Catalog) {
         } catch { Write-Host "  $(M 'conf_fail') $r" -ForegroundColor Yellow }
     }
 }
+# Add-ons: a mod's `addons=` names a file (URL, or a file next to -Catalog confs) of more rmpp-mod.conf blocks,
+# separated by lines `---`. They are listed right under the mod (parent=<id>, label shown instead of the id).
+$withAddons = @()
+foreach ($m in $Mods) {
+    $withAddons += $m
+    if (-not $m.addons) { continue }
+    $af = Join-Path $tmp "addons.txt"
+    try {
+        if ($m.addons -like "http*") { Invoke-WebRequest -UseBasicParsing $m.addons -OutFile $af }
+        else { Copy-Item (Join-Path $Catalog $m.addons) $af }
+    } catch { continue }
+    $block = @()
+    foreach ($line in ([System.IO.File]::ReadAllLines($af, $Utf8) + @("---"))) {
+        if ($line -match '^---') {
+            if ($block.Count) {
+                $bf = Join-Path $tmp "block.conf"
+                [System.IO.File]::WriteAllLines($bf, [string[]]$block, $Utf8)
+                $c = Read-Conf $bf $m.repo
+                if (-not $c.parent) { $c.parent = $m.id }
+                $withAddons += $c
+            }
+            $block = @()
+        } elseif ($line -notmatch '^\s*(#|$)') { $block += $line }
+    }
+}
+$Mods = $withAddons
 $All = @($Mods | ForEach-Object { $_.id })
 $Defaults = @($Mods | Where-Object { $_.default -eq "1" } | ForEach-Object { $_.id })
+if ($List) {
+    foreach ($m in $Mods) { Write-Host ("{0}`t{1}`t{2}`t{3}" -f $m.id, $m.parent, $m.package, $m["short_$Lang"]) }
+    exit 0
+}
 
 # ---------------------------------------------------------------- checkbox menu
 function Width([string]$s) {   # display columns: Hangul syllables and other wide characters take 2
@@ -133,7 +165,8 @@ function Show-Menu([string[]]$Installed) {
                 $m = $Mods[$i]
                 $box = if ($sel[$i]) { "[x]" } else { "[ ]" }
                 $st = if ($Installed -contains $m.id) { "  ($(M 'installed'))" } else { "" }
-                $row = (Pad $m.id 17) + " " + (Pad $m["short_$script:Lang"] 38) + $st
+                $name = if ($m.label) { "  " + $m.label } else { $m.id }
+                $row = (Pad $name 17) + " " + (Pad $m["short_$script:Lang"] 38) + $st
                 if ($i -eq $cur) { Write-Host "  > $box $row" -ForegroundColor Black -BackgroundColor Gray }
                 else { Write-Host "    $box $row" }
             }

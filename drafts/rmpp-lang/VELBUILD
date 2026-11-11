@@ -1,0 +1,129 @@
+# DRAFT (see drafts/README.md): moves to packages/rmpp-lang/ when rmpp-lang v0.1.0 is released; fill in sha512sums.
+maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
+pkgname=rmpp-lang
+pkgver=0.1.0
+pkgrel=0
+upstream_author="lorancecall"
+category="ui"
+pkgdesc="Languages: Korean keyboard, keyboard switching, fonts per language (typed text too); add-ons for more languages"
+url="https://github.com/lorancecall/rmpp-lang"
+arch="aarch64"
+license="GPL-3.0-only AND OFL-1.1"
+depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
+replaces="rmpp-korean"
+_fonts_commit="165c01b46ea533872e002e0785ff17e44f6d97d8"
+_fonts_license_commit="a99a4354c68964f6bfac488d01010b1fb6d9178a"
+source="
+https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/librmpp-lang.so
+https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/rmpp-lang.rcc
+https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/rmpp-lang
+https://raw.githubusercontent.com/$upstream_author/rmpp-lang/v$pkgver/LICENSE
+NotoSansCJKkr-Regular.otf::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_commit/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf
+NotoSansCJKkr-Bold.otf::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_commit/Sans/OTF/Korean/NotoSansCJKkr-Bold.otf
+OFL-LICENSE::https://raw.githubusercontent.com/notofonts/noto-cjk/$_fonts_license_commit/Sans/LICENSE
+"
+options="!check !fhs !strip"
+
+# Each lifecycle function runs as its own script: no shared helpers, every step is written out.
+# Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+# Language add-ons are separate packages rmpp-lang-<code> (scripts/lang-addons.py); they put <code>.rcc into
+# /usr/lib/rmpp-lang/languages/, which this package creates.
+
+package() {
+	install -Dm755 "$srcdir"/librmpp-lang.so "$pkgdir"/home/root/.vellum/share/rmpp-lang/librmpp-lang.so
+	install -Dm644 "$srcdir"/rmpp-lang.rcc "$pkgdir"/home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc
+	install -Dm755 "$srcdir"/rmpp-lang "$pkgdir"/home/root/.vellum/share/rmpp-lang/rmpp-lang
+
+	install -Dm644 "$srcdir"/NotoSansCJKkr-Regular.otf \
+		"$pkgdir"/home/root/.local/share/fonts/rmpp-lang/ko/NotoSansCJKkr-Regular.otf
+	install -Dm644 "$srcdir"/NotoSansCJKkr-Bold.otf \
+		"$pkgdir"/home/root/.local/share/fonts/rmpp-lang/ko/NotoSansCJKkr-Bold.otf
+
+	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
+	install -Dm644 "$srcdir"/OFL-LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/OFL-LICENSE
+	echo "https://github.com/$upstream_author/rmpp-lang" > \
+		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
+}
+
+postinstall() {
+	/home/root/.vellum/bin/mount-rw
+	mkdir -p /usr/lib/rmpp-lang/languages
+	cp /home/root/.vellum/share/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-lang/librmpp-lang.so.new && chmod 755 /usr/lib/rmpp-lang/librmpp-lang.so.new && mv -f /usr/lib/rmpp-lang/librmpp-lang.so.new /usr/lib/rmpp-lang/librmpp-lang.so
+	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc /usr/lib/rmpp-lang/rmpp-lang.rcc.new && chmod 644 /usr/lib/rmpp-lang/rmpp-lang.rcc.new && mv -f /usr/lib/rmpp-lang/rmpp-lang.rcc.new /usr/lib/rmpp-lang/rmpp-lang.rcc
+	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
+	mkdir -p /usr/lib/rmpp-preload.d
+	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
+	# rmpp-korean 0.1.0: both libraries would compose Hangul twice
+	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
+	rm -rf /usr/lib/rmpp-korean
+	# Keep the behaviour of rmpp-korean (it had no settings file)
+	[ -f /home/root/.config/rmpp-lang/lang.conf ] || { mkdir -p /home/root/.config/rmpp-lang
+		printf 'languages=ko,en\nkeyboard.ko=1\n' > /home/root/.config/rmpp-lang/lang.conf; }
+	# Fonts a user dropped next to rmpp-korean's
+	mkdir -p /home/root/.local/share/fonts/rmpp-lang/ko
+	if [ -d /home/root/.local/share/fonts/rmpp-korean ]; then
+		for f in /home/root/.local/share/fonts/rmpp-korean/*.[ot]t[fc]; do
+			[ -e "$f" ] && mv -n "$f" /home/root/.local/share/fonts/rmpp-lang/ko/
+		done
+		rmdir /home/root/.local/share/fonts/rmpp-korean 2>/dev/null || true
+	fi
+	sync
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
+}
+
+postupgrade() {
+	/home/root/.vellum/bin/mount-rw
+	mkdir -p /usr/lib/rmpp-lang/languages
+	cp /home/root/.vellum/share/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-lang/librmpp-lang.so.new && chmod 755 /usr/lib/rmpp-lang/librmpp-lang.so.new && mv -f /usr/lib/rmpp-lang/librmpp-lang.so.new /usr/lib/rmpp-lang/librmpp-lang.so
+	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc /usr/lib/rmpp-lang/rmpp-lang.rcc.new && chmod 644 /usr/lib/rmpp-lang/rmpp-lang.rcc.new && mv -f /usr/lib/rmpp-lang/rmpp-lang.rcc.new /usr/lib/rmpp-lang/rmpp-lang.rcc
+	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
+	mkdir -p /usr/lib/rmpp-preload.d
+	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
+	rm -f /usr/lib/rmpp-preload.d/50-rmpp-korean.so
+	rm -rf /usr/lib/rmpp-korean
+	sync
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
+}
+
+# `vellum reenable` after an OS update: the root file system is already writable here. The add-on packages
+# copy their own .rcc files back in their postosupgrade.
+postosupgrade() {
+	mkdir -p /usr/lib/rmpp-lang/languages
+	cp /home/root/.vellum/share/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-lang/librmpp-lang.so.new && chmod 755 /usr/lib/rmpp-lang/librmpp-lang.so.new && mv -f /usr/lib/rmpp-lang/librmpp-lang.so.new /usr/lib/rmpp-lang/librmpp-lang.so
+	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc /usr/lib/rmpp-lang/rmpp-lang.rcc.new && chmod 644 /usr/lib/rmpp-lang/rmpp-lang.rcc.new && mv -f /usr/lib/rmpp-lang/rmpp-lang.rcc.new /usr/lib/rmpp-lang/rmpp-lang.rcc
+	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
+	mkdir -p /usr/lib/rmpp-preload.d
+	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
+	sync
+}
+
+# Settings (/home/root/.config/rmpp-lang) and the user's fonts stay, so a reinstall finds them again.
+predeinstall() {
+	/home/root/.vellum/bin/mount-rw
+	rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so
+	rm -rf /usr/lib/rmpp-lang
+	rm -f /usr/bin/rmpp-lang
+	sync
+	systemctl daemon-reload
+	systemctl reset-failed xochitl 2>/dev/null || true
+	systemctl restart xochitl
+	sleep 3
+	/home/root/.vellum/bin/mount-restore
+}
+sha512sums="
+TODO  librmpp-lang.so
+TODO  rmpp-lang.rcc
+TODO  rmpp-lang
+TODO  LICENSE
+5010e4db7b2851702a867af2fdc1ff26d1652cd91c04421d2c62f39a2f208694c1d889957e382c72cc340ba9b4f48b0ebffbc5e880be63a8301cbcd28a59f23c  NotoSansCJKkr-Regular.otf
+c08f86b5553f42b773ce0c4313e4a496170f16139ab2bc5e63ab9714a99b0a1954b755b94ac508f35606decf42bdf0f9a64e8cd1f08dca0ba9245752d5e3fb02  NotoSansCJKkr-Bold.otf
+53cf33ddac5d44b9f622a041f267bcf53ca704555f0481ee3e89eeba505019c8d1d504a6ffe7ebd6a7d1d5d7d26cf3da052cc63b3540eb4260ce74a93cf35841  OFL-LICENSE
+"

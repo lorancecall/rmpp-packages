@@ -24,6 +24,25 @@ Only add repositories you trust: a `type=release` mod runs its own install scrip
 | `needs` | | Vellum packages installed first (for example `rmpp-preload`) |
 | `assets` | `release` | release asset names (space separated) downloaded from `releases/latest`; must include `rmpp-install.sh` |
 | `check` | `release` | shell test run on the tablet; success = installed (for the "installed" mark) |
+| `addons` | | URL of the mod's add-on list (below); its add-ons are listed right under the mod |
+
+## Add-ons
+
+A mod can offer optional parts that are installed as their own packages, such as the languages of rmpp-lang.
+`addons=<URL>` points to a text file of rmpp-mod.conf blocks separated by lines `---`. Each block is an add-on
+with the keys above plus:
+
+| key | meaning |
+|---|---|
+| `label` | text shown instead of the id, indented under the mod (e.g. `└ ja Japanese`) |
+| `parent` | the mod it belongs to (filled in by the installer) |
+| `needs` | usually the mod's own package, so picking an add-on installs the mod too |
+
+rmpp-lang's list is generated in CI: `scripts/lang-addons.py` builds a package `rmpp-lang-<code>` for each
+`languages/<code>/` of the rmpp-lang repository (repository and ref in `lang-addons.conf`) and publishes the list
+as `https://lorancecall.github.io/rmpp-packages/addons/rmpp-lang.txt`. Adding a language is a folder in
+rmpp-lang; nothing changes here. With `--catalog DIR` (`-Catalog`), `addons` may also name a file in DIR.
+`--list` (`-List`) prints the catalog, add-ons included, and exits.
 
 ## How a `release` mod is installed
 
