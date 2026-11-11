@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rmpp setup</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1 data-t="title">rmpp setup</h1>
+  <button id="lang" class="link" type="button">한국어</button>
+</header>
+
+<main>
+  <!-- 1. Connect -->
+  <section id="connect" class="card">
+    <h2><span class="num">1</span><span data-t="connect">Connect to the tablet</span></h2>
+    <p class="muted" data-t="connect_help">Turn on developer mode on the tablet, connect it with USB (or use its Wi-Fi address).</p>
+    <div class="row">
+      <label for="host" data-t="address">Tablet address</label>
+      <input id="host" value="10.11.99.1" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="row" id="pwrow" hidden>
+      <label for="pw" data-t="password">Root password</label>
+      <input id="pw" type="password" autocomplete="off">
+    </div>
+    <p class="muted small" id="pwhelp" hidden data-t="password_help">Shown on the tablet: Settings › General › Help › About › Copyrights and licenses. Needed once; then a key is used.</p>
+    <div class="actions">
+      <button id="btnConnect" class="primary" type="button" data-t="connect_btn">Connect</button>
+      <span id="connState" class="state"></span>
+    </div>
+  </section>
+
+  <!-- 2. Choose -->
+  <section id="choose" class="card" hidden>
+    <h2><span class="num">2</span><span data-t="choose">Choose mods</span></h2>
+    <div id="restore" class="notice" hidden>
+      <span data-t="restore_note">The reMarkable OS was updated: the mods' system files need restoring.</span>
+      <button id="btnRestore" type="button" data-t="restore_btn">Restore</button>
+    </div>
+    <ul id="mods" class="mods"></ul>
+    <div class="actions">
+      <button id="btnInstall" class="primary" type="button" data-t="install_btn">Install ticked</button>
+      <button id="btnRemove" type="button" data-t="remove_btn">Remove unticked installed</button>
+      <span class="muted small" data-t="restart_note">The tablet's screen restarts once or twice while installing.</span>
+    </div>
+  </section>
+
+  <!-- 3. Progress -->
+  <section id="progress" class="card" hidden>
+    <h2><span class="num">3</span><span data-t="progress">Progress</span></h2>
+    <ol id="steps" class="steps"></ol>
+    <details>
+      <summary data-t="details">Details</summary>
+      <pre id="log"></pre>
+    </details>
+  </section>
+
+  <p id="error" class="error" role="alert" hidden></p>
+  <p id="warnings" class="muted small" hidden></p>
+</main>
+
+<footer class="muted small">
+  <span data-t="footer">After a reMarkable OS update, open this app again and press Restore.</span>
+  <a href="#" id="repoLink">github.com/lorancecall/rmpp-packages</a>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
