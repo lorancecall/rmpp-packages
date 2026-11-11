@@ -4,13 +4,13 @@ A [Vellum](https://github.com/vellum-dev/vellum) package repository for the reMa
 
 | Package | What it does |
 |---|---|
-| `rmpp-korean` | Korean (Hangul) on-screen keyboard and fonts; Bluetooth/USB/Type Folio keyboards type Korean (Ctrl+Space or right Alt to switch); "한/EN" indicator on the format bar |
 | `rmpp-bt` | Bluetooth page in Settings (search, pair, connect, forget), Bluetooth toggle in quick settings, Bluetooth on at boot, per-keyboard "Type Folio mode" |
 | `rmpp-tailscale` | Tailscale with a Settings page: on/off, log in by scanning a QR code, status and tailnet devices, updates; SSH to the tablet over Tailscale (userspace networking, ~70 MB in /home) |
 | `rmpp-refresh` | "Refresh screen" button in the notebook toolbar's convert menu: one tap redraws the whole screen and clears ghosting |
 | `rmpp-preload` | Loads the add-ons above into xochitl at boot; keeps xovi working if you use it (installed automatically) |
 
-None of them needs xovi, and they keep working after a reboot.
+None of them needs xovi, and they keep working after a reboot. Korean input (formerly `rmpp-korean`) is being
+replaced by `rmpp-lang` (languages, keyboards and fonts per language) and is not offered until it is released.
 
 ## Before you install: developer mode and SSH
 
@@ -103,8 +103,8 @@ sh install-rmpp.sh
 ```
 
 After logging in, the installer shows a checkbox menu of all rmpp mods: one line per mod (short description,
-"installed" mark), and the full description of the mod under the cursor below the list. Korean input and
-Bluetooth are selected by default, installed mods stay selected. ↑↓ to move, Space to select, **L to switch
+"installed" mark), and the full description of the mod under the cursor below the list. Bluetooth is
+selected by default, installed mods stay selected. ↑↓ to move, Space to select, **L to switch
 between Korean and English** (the language starts from your system language), Enter to install, Q to quit
 (nothing is installed).
 
@@ -119,7 +119,7 @@ Options (Windows: add them after `-File install-rmpp.ps1`, with `powershell` or 
 | | Linux / macOS | Windows |
 |---|---|---|
 | tablet address | `sh install-rmpp.sh 10.11.99.1` | `-TabletHost 10.11.99.1` |
-| pick mods, no menu | `--packages rmpp-korean,rmpp-bt` | `-Packages rmpp-korean,rmpp-bt` |
+| pick mods, no menu | `--packages rmpp-bt,rmpp-tailscale` | `-Packages rmpp-bt,rmpp-tailscale` |
 | default selection, no questions | `--yes` | `-Yes` |
 | language | `--lang ko` or `--lang en` | `-Lang ko` or `-Lang en` |
 
@@ -131,18 +131,17 @@ If Vellum is already on the tablet, run on the tablet:
 
 ```sh
 wget -qO- https://lorancecall.github.io/rmpp-packages/install.sh | sh
-vellum add rmpp-korean rmpp-bt rmpp-tailscale rmpp-refresh
+vellum add rmpp-bt rmpp-tailscale rmpp-refresh
 ```
 
 `install.sh` adds this repository and its signing key (`lorancecall-rmpp.rsa.pub`) to Vellum. Updates come with `vellum upgrade`.
 
 **After a reMarkable OS update**, run `vellum reenable` (the installer does this for you): an OS update replaces the root file system, where these add-ons live.
 
-Remove with `vellum del rmpp-korean rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload`.
+Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `vellum del rmpp-korean` on a tablet that still has it).
 
 ## Sources
 
-- [rmpp-korean](https://github.com/lorancecall/rmpp-korean)
 - [rmpp-bt](https://github.com/lorancecall/rmpp-bt)
 - [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale)
 - [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh)
