@@ -35,6 +35,25 @@ def conf(path):
     return d
 
 
+CODES_URL = "https://raw.githubusercontent.com/lorancecall/rmpp-hwr-db/main/scripts/languages.py"
+
+
+def shared_codes():
+    """The language codes shared by rmpp-hwr-db, rmpp-hwr and rmpp-lang (ISO 639-1 + variants), read as text from
+    rmpp-hwr-db's scripts/languages.py (not imported). Empty set = not available, no check."""
+    import urllib.request
+    try:
+        text = urllib.request.urlopen(CODES_URL, timeout=20).read().decode("utf-8")
+    except OSError:
+        print("note: could not read the shared language codes; add-on codes not checked")
+        return set()
+    iso = re.search(r'ISO_639_1 = set\("""(.*?)"""', text, re.S)
+    var = re.search(r"VARIANTS = \{(.*?)\}", text)
+    if not iso:
+        return set()
+    return set(iso.group(1).split()) | set(re.findall(r'"([a-z-]+)"', var.group(1) if var else ""))
+
+
 def short(summary):
     """First part of a summary for the one-line menu entry: up to '(', ':' or ','."""
     s = re.split(r"\s*[(:,]", summary, maxsplit=1)[0].strip()
@@ -116,6 +135,11 @@ def main():
         subprocess.run(["git", "clone", "-q", "--depth", "1", "-b", ref, f"https://github.com/{repo}.git", str(src)],
                        check=True)
     codes = sorted(p.parent.name for p in (src / "languages").glob("*/language.conf") if p.parent.name not in RESERVED)
+    allowed = shared_codes()
+    if allowed:
+        bad = [c for c in codes if c not in allowed]
+        if bad:
+            sys.exit(f"not ISO 639-1 or a known variant (rmpp-hwr-db scripts/languages.py): {', '.join(bad)}")
     for old in ROOT.glob("packages/rmpp-lang-*"):
         shutil.rmtree(old)
     if codes:
