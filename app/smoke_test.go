@@ -25,15 +25,16 @@ func TestSmoke(t *testing.T) {
 	if host == "" {
 		t.Skip("RMPP_HOST not set: tablet part skipped")
 	}
-	tab, needPw, err := connect(host, "")
+	tab, auth, needPw, err := connect(host, "", ConnectOptions{KeyPath: os.Getenv("RMPP_KEY")})
 	if err != nil || needPw {
 		t.Fatalf("connect: needPassword=%v err=%v", needPw, err)
 	}
+	t.Logf("logged in with %s", auth)
 	defer tab.Close()
 	a := &App{tablet: tab, mods: mods}
 	r, err := a.status()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("vellum=%v needsRestore=%v model=%q installed=%v", r.Vellum, r.NeedsRestore, r.Model, r.Installed)
+	t.Logf("vellum=%v needsRestore=%v model=%q installed=%v manual=%v", r.Vellum, r.NeedsRestore, r.Model, r.Installed, r.Manual)
 }

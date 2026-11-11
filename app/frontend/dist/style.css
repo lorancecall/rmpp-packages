@@ -28,6 +28,12 @@ button { font: inherit; padding: 7px 14px; border-radius: 6px; border: 1px solid
 button.primary { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
 button:disabled { opacity: 0.5; cursor: default; }
 button.link { border: none; padding: 0; text-decoration: underline; }
+details#advanced { margin: 10px 0 0; }
+details#advanced summary { cursor: pointer; color: var(--muted); }
+details#advanced .row label { width: 140px; }
+input.short { flex: none; width: 110px; }
+label.check { display: flex; gap: 8px; align-items: center; margin: 6px 0; cursor: pointer; }
+label.check input { flex: none; width: 16px; height: 16px; accent-color: var(--accent); }
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
 .state { color: var(--muted); }
 .state.ok { color: var(--ok); }
