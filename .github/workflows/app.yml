@@ -1,0 +1,83 @@
+name: rmpp setup app
+
+# Builds the desktop installer app (app/, Go + Wails) for Windows, macOS (universal) and Linux.
+# Every run uploads the builds as workflow artifacts; a tag app-v* also attaches them to a draft release, which the
+# maintainer reviews and publishes by hand.
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/app.yml"]
+    tags: ["app-v*"]
+  pull_request:
+    paths: ["app/**", ".github/workflows/app.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows/amd64
+            out: rmpp-setup-windows-amd64.exe
+          - os: macos-latest
+            platform: darwin/universal
+            out: rmpp-setup-macos.zip
+          - os: ubuntu-22.04
+            platform: linux/amd64
+            out: rmpp-setup-linux-amd64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: app
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+      - name: Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
+      - name: Tests
+        run: go vet ./... && go test ./...
+      - name: Build
+        run: wails build -clean -platform ${{ matrix.platform }} -trimpath -ldflags "-s -w"
+      - name: Package
+        run: |
+          mkdir -p ../dist
+          case "${{ runner.os }}" in
+            Windows) cp build/bin/rmpp-setup.exe "../dist/${{ matrix.out }}" ;;
+            macOS) (cd build/bin && ditto -c -k --keepParent "rmpp setup.app" "$GITHUB_WORKSPACE/dist/${{ matrix.out }}" 2>/dev/null ||
+                    ditto -c -k --keepParent rmpp-setup.app "$GITHUB_WORKSPACE/dist/${{ matrix.out }}") ;;
+            Linux) cp build/bin/rmpp-setup "../dist/${{ matrix.out }}" && chmod +x "../dist/${{ matrix.out }}" ;;
+          esac
+          ls -la ../dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.out }}
+          path: dist/${{ matrix.out }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/app-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* -R "$GITHUB_REPOSITORY" --draft \
+            --title "rmpp setup ${GITHUB_REF_NAME#app-v}" \
+            --notes "Desktop installer for the rmpp mods (Windows, macOS, Linux). Unsigned: see app/README.md for the first-run warnings."

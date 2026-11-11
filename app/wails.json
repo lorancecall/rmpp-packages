@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "rmpp-setup",
+  "outputfilename": "rmpp-setup",
+  "frontend:install": "",
+  "frontend:build": "",
+  "wailsjsdir": "",
+  "author": {
+    "name": "lorancecall",
+    "email": "84116812+lorancecall@users.noreply.github.com"
+  },
+  "info": {
+    "companyName": "lorancecall",
+    "productName": "rmpp setup",
+    "productVersion": "0.1.0",
+    "copyright": "GPL-3.0-only",
+    "comments": "Installs the rmpp mods on a reMarkable Paper Pro"
+  }
+}
