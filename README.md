@@ -166,6 +166,27 @@ vellum add rmpp-bt rmpp-tailscale rmpp-refresh
 
 Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `vellum del rmpp-korean` on a tablet that still has it).
 
+## How the add-ons load (and how that differs from xovi)
+
+[xovi](https://github.com/asivery/xovi) is *tethered*: it lives in `/home/root/xovi`, is started by hand (`xovi/start`
+over SSH, or a starter such as xovi-tripletap), and a reboot returns the tablet to the stock OS. Its README asks
+not to start it automatically on boot.
+
+These add-ons load **on every boot**, with no step after a restart: `rmpp-preload` adds a systemd drop-in for
+xochitl (`zz-rmpp-preload.conf`) and a launcher on the root file system, which loads `/usr/lib/rmpp-preload.d/*.so`
+into xochitl. It keeps xovi working if you also use it.
+
+| | xovi | rmpp add-ons |
+|---|---|---|
+| After a reboot | stock OS until started again | add-ons on |
+| Files | `/home` only | `/usr/lib`, systemd units (root file system) |
+| Factory reset | removes it | leaves the system files: see below |
+| After an OS update | start again | **Restore** in the app (`vellum reenable`) |
+| Developer mode | needed; off only with reMarkable's recovery application | same |
+
+Loading at boot does not cause e-paper ghosting: in a test with every add-on unloaded but the boot hook in place,
+the lock screen came up clean; the ghosting seen once came from many xochitl restarts in a row.
+
 ## Before you factory-reset, sell or return the tablet
 
 The add-ons live on the tablet's root file system (`/usr/lib`), which a factory reset does **not** wipe: a reset
