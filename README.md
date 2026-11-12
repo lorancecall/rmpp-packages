@@ -179,13 +179,10 @@ into xochitl. It keeps xovi working if you also use it.
 | | xovi | rmpp add-ons |
 |---|---|---|
 | After a reboot | stock OS until started again | add-ons on |
-| Files | `/home` only | `/usr/lib`, systemd units (root file system) |
+| Files | `/home` only | each add-on's library and resources in `/usr/lib/<add-on>`, its systemd units, the boot hook; settings and data in `/home` |
 | Factory reset | removes it | leaves the system files: see below |
 | After an OS update | start again | **Restore** in the app (`vellum reenable`) |
 | Developer mode | needed; off only with reMarkable's recovery application | same |
-
-Loading at boot does not cause e-paper ghosting: in a test with every add-on unloaded but the boot hook in place,
-the lock screen came up clean; the ghosting seen once came from many xochitl restarts in a row.
 
 ## Before you factory-reset, sell or return the tablet
 
