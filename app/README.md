@@ -16,6 +16,11 @@ A window for installing the rmpp mods on a reMarkable Paper Pro, for Windows, ma
    without Vellum (GitHub release or by hand), rmpp-preload, and this repository's entry and key. Optionally Vellum
    itself (`/home/root/.vellum` and its lines in `.bashrc`). Packages from other repositories are never touched; while
    any are installed, rmpp-preload and Vellum stay.
+5. **Clean up leftover system files** (same place): for a tablet that was factory-reset with the add-ons on it. A
+   reset wipes `/home` (Vellum and its removal scripts included) but not the root file system, so the add-ons'
+   files in `/usr/lib`, their systemd units and xochitl's `zz-rmpp-preload.conf` stay and keep loading. This lists
+   every rmpp system file whose package is not installed, asks, stops the units, removes the files and restarts
+   xochitl. Works without Vellum.
 
 SSH runs inside the app (Go `x/crypto/ssh`), so no ssh or curl is needed on the computer. Host keys are remembered
 on first use in the app's config folder (`rmpp-setup/known_hosts`).

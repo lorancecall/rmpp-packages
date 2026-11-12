@@ -37,6 +37,12 @@
       rm_vellum_too: "Vellum, with everything in /home/root/.vellum", rm_data: "Settings and data of the mods",
       rm_kept: "rmpp-preload and Vellum stay, because other packages are installed:", rm_nothing: "No rmpp mods are on the tablet.",
       step_uninstalling: "Removing",
+      cleanup_btn: "Clean up leftover system files…",
+      cleanup_help: "After a factory reset the add-ons' system files stay (a reset only wipes /home, Vellum included), and xochitl keeps loading them. This removes every rmpp system file whose package is not installed.",
+      cl_confirm: "Remove these leftover system files? This cannot be undone.",
+      cl_restart: "The tablet's screen restarts once.", cl_of: "Left over from:",
+      cl_kept: "Kept (installed packages):", cl_nothing: "No leftover rmpp system files on the tablet.",
+      step_cleaning: "Removing leftover files of",
     },
     ko: {
       title: "rmpp 설치", other: "English",
@@ -72,6 +78,12 @@
       rm_vellum_too: "Vellum (/home/root/.vellum 전체)", rm_data: "mod의 설정과 데이터",
       rm_kept: "다른 패키지가 있어서 rmpp-preload와 Vellum은 남깁니다:", rm_nothing: "태블릿에 rmpp mod가 없습니다.",
       step_uninstalling: "제거합니다",
+      cleanup_btn: "남은 시스템 파일 정리…",
+      cleanup_help: "공장 초기화를 해도 add-on의 시스템 파일은 남고(초기화는 Vellum을 포함한 /home만 지웁니다), xochitl이 계속 불러옵니다. 설치되어 있지 않은 패키지의 rmpp 시스템 파일을 모두 지웁니다.",
+      cl_confirm: "남은 시스템 파일을 지울까요? 되돌릴 수 없습니다.",
+      cl_restart: "태블릿 화면이 한 번 다시 시작됩니다.", cl_of: "남은 것:",
+      cl_kept: "남기는 것 (설치된 패키지):", cl_nothing: "태블릿에 남은 rmpp 시스템 파일이 없습니다.",
+      step_cleaning: "남은 파일을 지웁니다:",
     },
   };
   let lang = (navigator.language || "en").toLowerCase().startsWith("ko") ? "ko" : "en";
@@ -131,7 +143,7 @@
   }
   function setBusy(b) {
     busy = b;
-    ["btnConnect", "btnInstall", "btnRemove", "btnRestore", "btnRemoveAll"].forEach(id => { $(id).disabled = b; });
+    ["btnConnect", "btnInstall", "btnRemove", "btnRestore", "btnRemoveAll", "btnCleanup"].forEach(id => { $(id).disabled = b; });
     document.querySelectorAll(".mods input").forEach(i => { i.disabled = b; });
   }
 
@@ -295,6 +307,17 @@
     if (p.kept && p.kept.length) parts.push(list(t("rm_kept"), p.kept));
     if (!window.confirm(t("rm_confirm") + "\n\n" + parts.join("\n\n"))) return;
     run(() => go().Uninstall(o));
+  };
+  $("btnCleanup").onclick = async () => {
+    showError(null);
+    let p;
+    try { p = await go().PlanCleanup(); } catch (e) { showError(e); return; }
+    if (!p.files || !p.files.length) { showError(t("cl_nothing")); return; }
+    const parts = [t("cl_of") + " " + p.owners.join(", "), p.files.join("\n")];
+    if (p.kept && p.kept.length) parts.push(t("cl_kept") + " " + p.kept.join(", "));
+    if (p.restart) parts.push(t("cl_restart"));
+    if (!window.confirm(t("cl_confirm") + "\n\n" + parts.join("\n\n"))) return;
+    run(() => go().Cleanup());
   };
 
   window.runtime.EventsOn("step", stepLine);

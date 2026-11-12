@@ -166,6 +166,16 @@ vellum add rmpp-bt rmpp-tailscale rmpp-refresh
 
 Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `vellum del rmpp-korean` on a tablet that still has it).
 
+## Before you factory-reset, sell or return the tablet
+
+The add-ons live on the tablet's root file system (`/usr/lib`), which a factory reset does **not** wipe: a reset
+removes `/home` (your files, Vellum and its removal scripts), so the add-ons stay and keep loading. Developer mode
+also stays on after a reset: only reMarkable's recovery application turns it off (and rewrites the system).
+
+- Before a reset: in the rmpp setup app, **Remove everything** (or `vellum del` the packages, then `rmpp-preload`).
+- Already reset: connect with the app and use **Clean up leftover system files**.
+- Handing the tablet over: reMarkable's recovery application returns it to the factory state, developer mode off.
+
 ## Sources
 
 The packages are built from the projects listed at the top (rmpp-lang, rmpp-bt, rmpp-tailscale, rmpp-refresh;
