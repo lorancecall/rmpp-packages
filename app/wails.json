@@ -12,7 +12,7 @@
   "info": {
     "companyName": "lorancecall",
     "productName": "rmpp setup",
-    "productVersion": "0.1.0",
+    "productVersion": "0.1.1",
     "copyright": "GPL-3.0-only",
     "comments": "Installs the rmpp mods on a reMarkable Paper Pro"
   }

@@ -21,12 +21,32 @@ The builds are not code-signed yet:
 
 - **Windows**: SmartScreen says "Windows protected your PC": More info › Run anyway.
 - **macOS**: unzip, then right-click `rmpp setup.app` › Open › Open (once). Or `xattr -dr com.apple.quarantine "rmpp setup.app"`.
-- **Linux**: `chmod +x rmpp-setup-linux-amd64`; needs GTK 3 and WebKitGTK (`libwebkit2gtk-4.0`).
+- **Linux**: `chmod +x rmpp-setup-linux-*`, then run it. See below for the file and the libraries.
+
+## Linux
+
+Pick the file for your computer, make it executable (`chmod +x`) and run it. It needs GTK 3 and WebKitGTK 4.1, which
+most desktops already have; if it does not start, install them:
+
+| Distribution | File | Libraries |
+|---|---|---|
+| Ubuntu 22.04+, Linux Mint 21+, Pop!_OS | `rmpp-setup-linux-amd64` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0` |
+| Debian 12+ | `rmpp-setup-linux-amd64` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0` |
+| Fedora | `rmpp-setup-linux-amd64` | `sudo dnf install gtk3 webkit2gtk4.1` |
+| Arch, Manjaro, EndeavourOS | `rmpp-setup-linux-amd64` | `sudo pacman -S gtk3 webkit2gtk-4.1` |
+| openSUSE Tumbleweed / Leap 15.6 | `rmpp-setup-linux-amd64` | `sudo zypper install gtk3 libwebkit2gtk-4_1-0` |
+| Raspberry Pi OS (64-bit) and other ARM64 | `rmpp-setup-linux-arm64` | as for Debian above |
+| RHEL, CentOS Stream, Rocky, AlmaLinux 9 | `rmpp-setup-linux-amd64-webkit40` | `sudo dnf install gtk3 webkit2gtk3` |
+| Other systems with only WebKitGTK 4.0 | `rmpp-setup-linux-amd64-webkit40` | `libwebkit2gtk-4.0` from your package manager |
+
+The builds need glibc 2.34 or newer, so older systems (Ubuntu 20.04, Debian 11, RHEL 8) cannot run them. There, or
+whenever the app does not start, use the terminal installer: `install-rmpp.sh` (POSIX `sh`, `ssh` and `curl` only)
+works on any distribution; see the [main README](../README.md#install).
 
 ## Build
 
 Go (see `go.mod`) and the Wails CLI (`go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0`); Linux also
-needs `libgtk-3-dev libwebkit2gtk-4.0-dev`.
+needs `libgtk-3-dev libwebkit2gtk-4.1-dev` and `-tags webkit2_41` (or `libwebkit2gtk-4.0-dev` without the tag).
 
 ```sh
 cd app
