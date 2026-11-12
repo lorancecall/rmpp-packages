@@ -125,8 +125,9 @@ func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 	if p.Preload {
 		p.Commands = append(p.Commands, vellumBin+" del rmpp-preload")
 	}
-	if hasVellum {
-		// this repository's entry and signing key: other repositories stay as they are
+	if hasVellum && (p.Preload || !installed["rmpp-preload"]) {
+		// this repository's entry and signing key (kept while rmpp-preload stays: its updates come from here);
+		// other repositories stay as they are
 		p.Commands = append(p.Commands, fmt.Sprintf("sed -i '\\#^%s$#d' /home/root/.vellum/etc/apk/repositories; "+
 			"rm -f /home/root/.vellum/etc/apk/keys/lorancecall-rmpp.rsa.pub", repoURL))
 	}
