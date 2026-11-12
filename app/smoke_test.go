@@ -37,4 +37,15 @@ func TestSmoke(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("vellum=%v needsRestore=%v model=%q installed=%v manual=%v", r.Vellum, r.NeedsRestore, r.Model, r.Installed, r.Manual)
+	// "Remove everything": only the plan (nothing is removed)
+	for _, o := range []UninstallOptions{{}, {Purge: true, Vellum: true}} {
+		p, err := a.plan(o)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("uninstall plan %+v: packages=%v files=%v preload=%v vellum=%v kept=%v", o, p.Packages, p.Files, p.Preload, p.Vellum, p.Kept)
+		for _, c := range p.Commands {
+			t.Logf("  $ %s", c)
+		}
+	}
 }

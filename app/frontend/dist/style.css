@@ -34,6 +34,9 @@ button:hover:not(:disabled) { border-color: var(--fg); }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 button.primary:hover:not(:disabled) { opacity: 0.85; }
 button:disabled { opacity: 0.4; cursor: default; }
+button.danger { border-color: var(--err); color: var(--err); }
+details#danger { margin: 16px 0 0; border-top: 1px solid var(--line); padding-top: 12px; }
+details#danger summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
 button.link { border: none; padding: 0; background: none; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
 details#advanced { margin: 12px 0 0; }
 details#advanced summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }

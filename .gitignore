@@ -5,3 +5,4 @@ packages/rmpp-lang-*/
 site-addons/
 app/build/bin/
 app/frontend/wailsjs/
+app/*.exe

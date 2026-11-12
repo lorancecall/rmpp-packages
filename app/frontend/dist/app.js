@@ -28,6 +28,15 @@
       via_key: "with key", via_pw: "with password",
       manual: "installed by hand", manual_tip: "Its files are on the tablet but not as a Vellum package; installing it here puts it under Vellum.",
       no_vellum: "Vellum (the package manager) is not on the tablet yet: installing sets it up first.",
+      remove_all: "Remove everything", remove_all_btn: "Remove everything…",
+      remove_all_help: "Removes all rmpp mods from the tablet, then rmpp-preload and this package repository. Packages from other repositories stay, and so do rmpp-preload and Vellum while they need them.",
+      rm_purge: "Also delete their settings and data (handwriting models, Tailscale login, ...)",
+      rm_vellum: "Also remove Vellum (only when no other package uses it)",
+      rm_confirm: "Remove from the tablet? This cannot be undone. The screen restarts once or more.",
+      rm_packages: "Packages:", rm_files: "Installed without Vellum:", rm_preload: "rmpp-preload (loads the add-ons)",
+      rm_vellum_too: "Vellum, with everything in /home/root/.vellum", rm_data: "Settings and data of the mods",
+      rm_kept: "rmpp-preload and Vellum stay, because other packages are installed:", rm_nothing: "No rmpp mods are on the tablet.",
+      step_uninstalling: "Removing",
     },
     ko: {
       title: "rmpp 설치", other: "English",
@@ -54,6 +63,15 @@
       via_key: "키로 연결", via_pw: "비밀번호로 연결",
       manual: "직접 설치됨", manual_tip: "파일은 태블릿에 있지만 Vellum 패키지가 아닙니다. 여기서 설치하면 Vellum이 관리합니다.",
       no_vellum: "태블릿에 아직 Vellum(패키지 관리자)이 없습니다. 설치할 때 먼저 설치됩니다.",
+      remove_all: "모두 제거", remove_all_btn: "모두 제거…",
+      remove_all_help: "태블릿에서 rmpp mod를 모두 지우고, rmpp-preload와 이 패키지 저장소도 지웁니다. 다른 저장소의 패키지는 남기고, 그 패키지가 쓰는 동안에는 rmpp-preload와 Vellum도 남깁니다.",
+      rm_purge: "설정과 데이터도 삭제 (손글씨 모델, Tailscale 로그인 등)",
+      rm_vellum: "Vellum도 제거 (다른 패키지가 쓰지 않을 때만)",
+      rm_confirm: "태블릿에서 제거할까요? 되돌릴 수 없습니다. 화면이 한 번 이상 다시 시작됩니다.",
+      rm_packages: "패키지:", rm_files: "Vellum 없이 설치된 것:", rm_preload: "rmpp-preload (add-on을 불러오는 부분)",
+      rm_vellum_too: "Vellum (/home/root/.vellum 전체)", rm_data: "mod의 설정과 데이터",
+      rm_kept: "다른 패키지가 있어서 rmpp-preload와 Vellum은 남깁니다:", rm_nothing: "태블릿에 rmpp mod가 없습니다.",
+      step_uninstalling: "제거합니다",
     },
   };
   let lang = (navigator.language || "en").toLowerCase().startsWith("ko") ? "ko" : "en";
@@ -113,7 +131,7 @@
   }
   function setBusy(b) {
     busy = b;
-    ["btnConnect", "btnInstall", "btnRemove", "btnRestore"].forEach(id => { $(id).disabled = b; });
+    ["btnConnect", "btnInstall", "btnRemove", "btnRestore", "btnRemoveAll"].forEach(id => { $(id).disabled = b; });
     document.querySelectorAll(".mods input").forEach(i => { i.disabled = b; });
   }
 
@@ -261,6 +279,23 @@
     run(() => go().Remove(ids));
   };
   $("btnRestore").onclick = () => run(() => go().Restore());
+  $("btnRemoveAll").onclick = async () => {
+    showError(null);
+    const o = { purge: $("rmPurge").checked, vellum: $("rmVellum").checked };
+    let p;
+    try { p = await go().PlanUninstall(o); } catch (e) { showError(e); return; }
+    const parts = [];
+    const list = (label, xs) => label + "\n  " + xs.join("\n  ");
+    if (p.packages && p.packages.length) parts.push(list(t("rm_packages"), p.packages));
+    if (p.files && p.files.length) parts.push(list(t("rm_files"), p.files));
+    if (p.preload) parts.push(t("rm_preload"));
+    if (o.purge) parts.push(t("rm_data"));
+    if (p.vellum) parts.push(t("rm_vellum_too"));
+    if (!parts.length) { showError(t("rm_nothing")); return; }
+    if (p.kept && p.kept.length) parts.push(list(t("rm_kept"), p.kept));
+    if (!window.confirm(t("rm_confirm") + "\n\n" + parts.join("\n\n"))) return;
+    run(() => go().Uninstall(o));
+  };
 
   window.runtime.EventsOn("step", stepLine);
   window.runtime.EventsOn("log", logLine);

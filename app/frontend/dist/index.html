@@ -60,6 +60,13 @@
       <button id="btnRemove" type="button" data-t="remove_btn">Remove unticked installed</button>
       <span class="muted small" data-t="restart_note">The tablet's screen restarts once or twice while installing.</span>
     </div>
+    <details id="danger">
+      <summary data-t="remove_all">Remove everything</summary>
+      <p class="muted small" data-t="remove_all_help">Removes all rmpp mods from the tablet, then rmpp-preload and this package repository. Packages from other repositories stay, and so do rmpp-preload and Vellum while they need them.</p>
+      <label class="check"><input id="rmPurge" type="checkbox"> <span data-t="rm_purge">Also delete their settings and data (handwriting models, Tailscale login, ...)</span></label>
+      <label class="check"><input id="rmVellum" type="checkbox"> <span data-t="rm_vellum">Also remove Vellum (only when no other package uses it)</span></label>
+      <div class="actions"><button id="btnRemoveAll" class="danger" type="button" data-t="remove_all_btn">Remove everything…</button></div>
+    </details>
   </section>
 
   <!-- 3. Progress -->
