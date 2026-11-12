@@ -1,5 +1,7 @@
 # rmpp setup (desktop app)
 
+<img src="../docs/rmpp-setup.png" alt="rmpp setup" width="560">
+
 A window for installing the rmpp mods on a reMarkable Paper Pro, for Windows, macOS and Linux. It does what
 `installer/install-rmpp.sh` and `install-rmpp.ps1` do, without a terminal:
 
