@@ -66,6 +66,8 @@
       <label class="check"><input id="rmPurge" type="checkbox"> <span data-t="rm_purge">Also delete their settings and data (handwriting models, Tailscale login, ...)</span></label>
       <label class="check"><input id="rmVellum" type="checkbox"> <span data-t="rm_vellum">Also remove Vellum (only when no other package uses it)</span></label>
       <div class="actions"><button id="btnRemoveAll" class="danger" type="button" data-t="remove_all_btn">Remove everything…</button></div>
+      <p class="muted small" data-t="cleanup_help">After a factory reset the add-ons' system files stay (a reset only wipes /home, Vellum included), and xochitl keeps loading them. This removes every rmpp system file whose package is not installed. reMarkable Paper Pro with OS 3.29 only: other tablets or versions are refused.</p>
+      <div class="actions"><button id="btnCleanup" class="danger" type="button" data-t="cleanup_btn">Clean up leftover system files…</button></div>
     </details>
   </section>
 

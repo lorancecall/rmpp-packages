@@ -38,6 +38,9 @@ const (
 func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 	t := a.tablet
 	p := UninstallPlan{}
+	if err := t.checkSupported(); err != nil {
+		return p, err
+	}
 	hasVellum := t.ok("[ -x " + vellumBin + " ]")
 	installed := map[string]bool{}
 	if hasVellum {
