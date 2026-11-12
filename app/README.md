@@ -36,11 +36,12 @@ most desktops already have; if it does not start, install them:
 | Arch, Manjaro, EndeavourOS | `rmpp-setup-linux-amd64` | `sudo pacman -S gtk3 webkit2gtk-4.1` |
 | openSUSE Tumbleweed / Leap 15.6 | `rmpp-setup-linux-amd64` | `sudo zypper install gtk3 libwebkit2gtk-4_1-0` |
 | Raspberry Pi OS (64-bit) and other ARM64 | `rmpp-setup-linux-arm64` | as for Debian above |
-| Older systems with only WebKitGTK 4.0 (Ubuntu 20.04, ...) | `rmpp-setup-linux-amd64-webkit40` | `sudo apt install libgtk-3-0 libwebkit2gtk-4.0-37` |
+| RHEL, CentOS Stream, Rocky, AlmaLinux 9 | `rmpp-setup-linux-amd64-webkit40` | `sudo dnf install gtk3 webkit2gtk3` |
+| Other systems with only WebKitGTK 4.0 | `rmpp-setup-linux-amd64-webkit40` | `libwebkit2gtk-4.0` from your package manager |
 
-The builds need glibc 2.35 or newer (Ubuntu 22.04's). On RHEL, CentOS Stream, Rocky or AlmaLinux 9 and other systems
-where the app does not start, use the terminal installer instead: `install-rmpp.sh` (POSIX `sh`, `ssh` and `curl`
-only) works on any distribution; see the [main README](../README.md#install).
+The builds need glibc 2.34 or newer, so older systems (Ubuntu 20.04, Debian 11, RHEL 8) cannot run them. There, or
+whenever the app does not start, use the terminal installer: `install-rmpp.sh` (POSIX `sh`, `ssh` and `curl` only)
+works on any distribution; see the [main README](../README.md#install).
 
 ## Build
 
