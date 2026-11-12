@@ -99,48 +99,94 @@ type Tablet struct {
 	client *ssh.Client
 }
 
-func dial(host string, auth ssh.AuthMethod) (*ssh.Client, error) {
+// ConnectOptions are the "Advanced" settings of the connect step; the zero value is the normal way.
+type ConnectOptions struct {
+	KeyPath      string `json:"keyPath"`      // private key file; empty = ~/.ssh/id_ed25519_rmpp (made if missing)
+	Port         int    `json:"port"`         // SSH port; 0 = 22
+	PasswordOnly bool   `json:"passwordOnly"` // log in with the root password every time, add no key
+}
+
+func dial(addr, known string, auth ssh.AuthMethod) (*ssh.Client, error) {
 	cfg := &ssh.ClientConfig{
 		User: "root", Auth: []ssh.AuthMethod{auth},
-		HostKeyCallback: hostKeyCallback(host), Timeout: 8 * time.Second,
-	}
-	addr := host
-	if !strings.Contains(addr, ":") {
-		addr += ":22"
+		HostKeyCallback: hostKeyCallback(known), Timeout: 8 * time.Second,
 	}
 	return ssh.Dial("tcp", addr, cfg)
 }
 
-// connect logs in with the rmpp key; if the tablet does not know it yet, the root password (shown on the tablet
-// in Settings > General > Help > About > Copyrights and licenses) is used once to add the key.
-func connect(host, password string) (*Tablet, bool, error) {
-	signer, pub, err := loadOrCreateKey()
+// loadKey reads a private key file the user picked (it must exist; passphrase-protected keys are not supported).
+func loadKey(p string) (ssh.Signer, string, error) {
+	data, err := os.ReadFile(p)
 	if err != nil {
-		return nil, false, err
+		return nil, "", err
 	}
-	if c, err := dial(host, ssh.PublicKeys(signer)); err == nil {
-		return &Tablet{Host: host, client: c}, false, nil
+	s, err := ssh.ParsePrivateKey(data)
+	var pp *ssh.PassphraseMissingError
+	if errors.As(err, &pp) {
+		return nil, "", fmt.Errorf("%s is protected by a passphrase; use a key without one", p)
+	}
+	if err != nil {
+		return nil, "", fmt.Errorf("%s: %w", p, err)
+	}
+	return s, string(ssh.MarshalAuthorizedKey(s.PublicKey())), nil
+}
+
+// connect logs in as root. Normally with the rmpp key; if the tablet does not know it yet, the root password
+// (shown on the tablet in Settings > General > Help > About > Copyrights and licenses) is used once to add the
+// key. auth tells how it logged in: "key" or "password". needPassword: ask the user and call again.
+func connect(host, password string, o ConnectOptions) (t *Tablet, auth string, needPassword bool, err error) {
+	port := o.Port
+	if port == 0 {
+		port = 22
+	}
+	addr := net.JoinHostPort(host, fmt.Sprint(port))
+	known := host
+	if port != 22 {
+		known = addr
+	}
+	if o.PasswordOnly {
+		if password == "" {
+			return nil, "", true, nil
+		}
+		c, err := dial(addr, known, ssh.Password(password))
+		if err != nil {
+			return nil, "", true, err
+		}
+		return &Tablet{Host: host, client: c}, "password", false, nil
+	}
+	var signer ssh.Signer
+	var pub string
+	if o.KeyPath != "" {
+		signer, pub, err = loadKey(o.KeyPath)
+	} else {
+		signer, pub, err = loadOrCreateKey()
+	}
+	if err != nil {
+		return nil, "", false, err
+	}
+	if c, err := dial(addr, known, ssh.PublicKeys(signer)); err == nil {
+		return &Tablet{Host: host, client: c}, "key", false, nil
 	} else if !strings.Contains(err.Error(), "unable to authenticate") {
-		return nil, false, err // not reachable, or the host key changed: a password would not help
+		return nil, "", false, err // not reachable, or the host key changed: a password would not help
 	}
 	if password == "" {
-		return nil, true, nil // the caller asks for the password
+		return nil, "", true, nil
 	}
-	c, err := dial(host, ssh.Password(password))
+	c, err := dial(addr, known, ssh.Password(password))
 	if err != nil {
-		return nil, true, err
+		return nil, "", true, err
 	}
-	t := &Tablet{Host: host, client: c}
-	if _, err := t.run("umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys", strings.NewReader(pub), nil); err != nil {
+	tab := &Tablet{Host: host, client: c}
+	if _, err := tab.run("umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys", strings.NewReader(pub), nil); err != nil {
 		c.Close()
-		return nil, false, fmt.Errorf("adding the key: %w", err)
+		return nil, "", false, fmt.Errorf("adding the key: %w", err)
 	}
 	c.Close()
-	c, err = dial(host, ssh.PublicKeys(signer))
+	c, err = dial(addr, known, ssh.PublicKeys(signer))
 	if err != nil {
-		return nil, false, fmt.Errorf("the key was not accepted: %w", err)
+		return nil, "", false, fmt.Errorf("the key was not accepted: %w", err)
 	}
-	return &Tablet{Host: host, client: c}, false, nil
+	return &Tablet{Host: host, client: c}, "key", false, nil
 }
 
 func (t *Tablet) Close() {

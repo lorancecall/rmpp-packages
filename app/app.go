@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -59,19 +60,33 @@ type ConnectResult struct {
 	Vellum       bool     `json:"vellum"`
 	NeedsRestore bool     `json:"needsRestore"` // Vellum packages present but the OS update removed their files
 	Model        string   `json:"model"`
+	Manual       []string `json:"manual"` // mod ids whose files are on the tablet without the Vellum package
+	Auth         string   `json:"auth"`   // "key" or "password"
+	KeyPath      string   `json:"keyPath"`
 }
 
-// Connect logs in (password only the first time) and reads what is installed.
-func (a *App) Connect(host, password string) (ConnectResult, error) {
+// DefaultKeyPath is the key the app (and the install scripts) use unless Advanced names another.
+func (a *App) DefaultKeyPath() string { return keyPath() }
+
+// PickKeyFile opens a file dialog in ~/.ssh for a private key; "" when cancelled.
+func (a *App) PickKeyFile() (string, error) {
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "SSH private key", DefaultDirectory: filepath.Dir(keyPath()), ShowHiddenFiles: true,
+	})
+}
+
+// Connect logs in (password only the first time, unless Advanced says otherwise) and reads what is installed.
+func (a *App) Connect(host, password string, opts ConnectOptions) (ConnectResult, error) {
 	host = strings.TrimSpace(host)
 	if host == "" {
 		host = "10.11.99.1"
 	}
+	opts.KeyPath = strings.TrimSpace(opts.KeyPath)
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.tablet.Close()
 	a.tablet = nil
-	t, needPw, err := connect(host, password)
+	t, auth, needPw, err := connect(host, password, opts)
 	if needPw && err == nil {
 		return ConnectResult{NeedPassword: true}, nil
 	}
@@ -79,7 +94,15 @@ func (a *App) Connect(host, password string) (ConnectResult, error) {
 		return ConnectResult{NeedPassword: needPw}, err
 	}
 	a.tablet = t
-	return a.status()
+	r, err := a.status()
+	r.Auth = auth
+	if auth == "key" {
+		r.KeyPath = opts.KeyPath
+		if r.KeyPath == "" {
+			r.KeyPath = keyPath()
+		}
+	}
+	return r, err
 }
 
 // Refresh reads the tablet state again.
@@ -114,6 +137,22 @@ func (a *App) status() (ConnectResult, error) {
 		}
 		if m.Installed {
 			r.Installed = append(r.Installed, m.ID)
+		}
+	}
+	// rmpp add-ons copied by hand (developer builds) load from /usr/lib/rmpp-preload.d/NN-<package>.so but are not
+	// Vellum packages: mark them, so the list does not claim they are missing. Installing takes them over.
+	if out, err := t.run("ls /usr/lib/rmpp-preload.d/ 2>/dev/null", nil, nil); err == nil {
+		links := strings.Fields(out)
+		for _, m := range a.mods {
+			if m.Installed || m.Type != "vellum" || m.Package == "" || m.Parent != "" {
+				continue
+			}
+			for _, l := range links {
+				if strings.HasSuffix(l, "-"+m.Package+".so") {
+					r.Manual = append(r.Manual, m.ID)
+					break
+				}
+			}
 		}
 	}
 	r.NeedsRestore = len(installed) > 0 && t.ok("[ ! -x /usr/lib/rmpp-preload/launch ] && [ -x /home/root/.vellum/bin/vellum ]")

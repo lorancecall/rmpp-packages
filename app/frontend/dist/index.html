@@ -26,6 +26,20 @@
       <input id="pw" type="password" autocomplete="off">
     </div>
     <p class="muted small" id="pwhelp" hidden data-t="password_help">Shown on the tablet: Settings › General › Help › About › Copyrights and licenses. Needed once; then a key is used.</p>
+    <details id="advanced">
+      <summary data-t="advanced">Advanced</summary>
+      <div class="row">
+        <label for="keyPath" data-t="key_file">SSH key</label>
+        <input id="keyPath" spellcheck="false" autocomplete="off">
+        <button id="btnKey" type="button" data-t="browse">Browse…</button>
+      </div>
+      <p class="muted small" data-t="key_help">Empty: the app's own key (made on first use, also used by the install scripts). Another key must have no passphrase.</p>
+      <div class="row">
+        <label for="port" data-t="port">SSH port</label>
+        <input id="port" type="number" min="1" max="65535" placeholder="22" class="short">
+      </div>
+      <label class="check"><input id="pwOnly" type="checkbox"> <span data-t="pw_only">Log in with the password every time (add no key to the tablet)</span></label>
+    </details>
     <div class="actions">
       <button id="btnConnect" class="primary" type="button" data-t="connect_btn">Connect</button>
       <span id="connState" class="state"></span>
@@ -39,6 +53,7 @@
       <span data-t="restore_note">The reMarkable OS was updated: the mods' system files need restoring.</span>
       <button id="btnRestore" type="button" data-t="restore_btn">Restore</button>
     </div>
+    <div id="novellum" class="notice" hidden><span data-t="no_vellum">Vellum (the package manager) is not on the tablet yet: installing sets it up first.</span></div>
     <ul id="mods" class="mods"></ul>
     <div class="actions">
       <button id="btnInstall" class="primary" type="button" data-t="install_btn">Install ticked</button>
