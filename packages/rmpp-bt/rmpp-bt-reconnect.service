@@ -1,5 +1,5 @@
 [Unit]
-Description=Reconnect trusted Bluetooth devices after boot and wake (rmpp-bt)
+Description=Log Bluetooth adapter power and device connects (rmpp-bt)
 After=bluetooth.service
 Wants=bluetooth.service
 

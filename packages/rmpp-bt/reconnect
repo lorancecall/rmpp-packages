@@ -1,29 +1,13 @@
 #!/bin/sh
-# Reconnect trusted Bluetooth devices whenever the adapter comes up: at boot and after every wake from sleep.
-# reMarkable's sleep hook (/usr/lib/systemd/system-sleep/sleep-wifi.sh) unloads the Bluetooth driver before
-# sleeping and loads it again on wake, so each wake brings a new adapter with nothing connected. Keyboards
-# usually reconnect on a key press; this covers ones that wait for the host.
-# It also logs adapter power, connects, disconnects and failed attempts: journalctl -u rmpp-bt-reconnect
-
-# One round: try every trusted, unconnected device, up to 6 times about 10 s apart.
-round() {
-	sleep 3
-	for n in 1 2 3 4 5 6; do
-		pending=0
-		for d in $(bluetoothctl devices Trusted | awk '{print $2}'); do
-			bluetoothctl info "$d" | grep -q "Connected: yes" && continue
-			pending=1
-			r=$(timeout 8 bluetoothctl connect "$d" 2>&1 | grep -iE "fail|error|success" | tail -n 1)
-			echo "connect $d (try $n): ${r:-no answer}"
-		done
-		[ "$pending" = 0 ] && return
-		sleep 10
-	done
-	echo "gave up for now: a key press on the keyboard should reconnect it; if not, pair it again"
-}
+# Logs Bluetooth adapter power and device connects/disconnects: journalctl -u rmpp-bt-reconnect
+# It no longer pages devices itself. reMarkable's sleep hook (/usr/lib/systemd/system-sleep/sleep-wifi.sh)
+# unloads the Bluetooth driver before sleep and loads it on wake, so a keyboard has to reconnect after each wake.
+# Keyboards like the Logitech K380 reconnect on a key press, and host-side connect attempts made that fail: while
+# the tablet pages the keyboard it cannot answer the keyboard's own connection (br-connection-busy, keyboard LED
+# keeps blinking). bluetoothd's own reconnect policy still applies.
 
 # dbus-monitor prints each signal over several lines; awk turns the ones we need into "path key value".
-# The BEGIN line starts a first round for the adapter that is already up. Devices appearing in a scan
+# The BEGIN line logs the adapter that is already up. Devices appearing in a scan
 # (InterfacesAdded of Device1) are not logged.
 dbus-monitor --system \
 	"type='signal',sender='org.bluez',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'" \
@@ -45,7 +29,6 @@ while read -r path key value; do
 	case "$key" in
 	Powered)
 		echo "adapter ${path##*/} powered: $value"
-		[ "$value" = true ] && round
 		;;
 	*) echo "$dev $key: $value" ;;
 	esac
