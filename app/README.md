@@ -11,6 +11,11 @@ A window for installing the rmpp mods on a reMarkable Paper Pro, for Windows, ma
    remove it (Vellum packages).
 3. **Install**: Vellum (its bootstrap checked against the hash in Vellum's README), this package repository and its
    signing key, `vellum add`, release mods; after a reMarkable OS update, **Restore** runs `vellum reenable`.
+4. **Remove everything** (under the mod list): shows what it will remove and asks first, then `vellum del` (or
+   `vellum purge` with "also delete settings and data") of this catalog's packages, the folders of mods installed
+   without Vellum (GitHub release or by hand), rmpp-preload, and this repository's entry and key. Optionally Vellum
+   itself (`/home/root/.vellum` and its lines in `.bashrc`). Packages from other repositories are never touched; while
+   any are installed, rmpp-preload and Vellum stay.
 
 SSH runs inside the app (Go `x/crypto/ssh`), so no ssh or curl is needed on the computer. Host keys are remembered
 on first use in the app's config folder (`rmpp-setup/known_hosts`).
