@@ -2,7 +2,8 @@
 
 A personal collection of add-ons for the reMarkable Paper Pro (OS 3.29): code I tuned for my own tablet, packaged
 so I can install it in one go. It is a [Vellum](https://github.com/vellum-dev/vellum) package repository only
-because that was the easiest way to gather my own packages in one place.
+because that was the easiest way to gather my own packages in one place. Getting started:
+**[lorancecall.github.io/rmpp](https://lorancecall.github.io/rmpp/)**.
 
 - **Not an official repository.** I don't plan to submit these packages to Vellum's main repository or any other
   package index myself.
