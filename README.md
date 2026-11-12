@@ -10,6 +10,18 @@ because that was the easiest way to gather my own packages in one place.
   or another package manager, feel free to move it there (keep the license, GPL-3.0). No need to ask.
 - **Use it freely**, as is: it is tested on my own tablet only, with no support promised.
 
+The same goes for all my rmpp projects, packaged here or not:
+
+| Project | What it is |
+|---|---|
+| [rmpp-lang](https://github.com/lorancecall/rmpp-lang) | Keyboards and fonts per language (Korean, Japanese, Chinese, Russian, ...) as add-ons |
+| [rmpp-bt](https://github.com/lorancecall/rmpp-bt) | Bluetooth settings page and keyboard support |
+| [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale) | Tailscale with a Settings page, SSH over Tailscale |
+| [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh screen button (full e-paper refresh) |
+| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | On-device handwriting recognition (convert to text), tools to collect handwriting and train models |
+| [rmpp-hwr-db](https://github.com/lorancecall/rmpp-hwr-db) | Open handwriting dataset written on the Paper Pro (CC BY 4.0; contributions welcome) |
+| rmpp setup ([app/](app/)) | Desktop installer for all of the above (Windows, macOS, Linux) |
+
 | Package | What it does |
 |---|---|
 | `rmpp-lang` | Languages: on-screen, Bluetooth, USB and Type Folio keyboards and fonts per language (Settings > Languages); each language is an add-on package `rmpp-lang-<code>` (`rmpp-lang-ko` Korean, `rmpp-lang-ja`, `rmpp-lang-zh`, `rmpp-lang-ru`) |
@@ -155,9 +167,8 @@ Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `
 
 ## Sources
 
-- [rmpp-bt](https://github.com/lorancecall/rmpp-bt)
-- [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale)
-- [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh)
+The packages are built from the projects listed at the top (rmpp-lang, rmpp-bt, rmpp-tailscale, rmpp-refresh;
+rmpp-hwr comes from its own releases).
 
 Packages are built and signed by GitHub Actions (`.github/workflows/publish.yml`) and published with GitHub Pages.
 
