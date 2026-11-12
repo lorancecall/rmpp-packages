@@ -28,7 +28,7 @@ The same goes for all my rmpp projects, packaged here or not:
 | `rmpp-lang` | Languages: on-screen, Bluetooth, USB and Type Folio keyboards and fonts per language (Settings > Languages); each language is an add-on package `rmpp-lang-<code>` (`rmpp-lang-ko` Korean, `rmpp-lang-ja`, `rmpp-lang-zh`, `rmpp-lang-ru`) |
 | `rmpp-bt` | Bluetooth page in Settings (search, pair, connect, forget), Bluetooth toggle in quick settings, Bluetooth on at boot, per-keyboard "Type Folio mode" |
 | `rmpp-tailscale` | Tailscale with a Settings page: on/off, log in by scanning a QR code, status and tailnet devices, updates; SSH to the tablet over Tailscale (userspace networking, ~70 MB in /home) |
-| `rmpp-refresh` | Refresh button in the notebook toolbar, right above the three dots: one tap redraws the whole screen and clears ghosting; also redraws once when the on-screen keyboard opens |
+| `rmpp-refresh` | Refresh button in the notebook toolbar (right above the three dots) and in the library sidebar (right above Trash): one tap redraws the whole screen and clears ghosting; also redraws once when the on-screen keyboard opens |
 | `rmpp-preload` | Loads the add-ons above into xochitl at boot; keeps xovi working if you use it (installed automatically) |
 
 None of them needs xovi, and they keep working after a reboot. `rmpp-lang` replaces the old `rmpp-korean`:
