@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-bt
 pkgver=0.1.0
-pkgrel=2
+pkgrel=3
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi)"
@@ -54,6 +54,7 @@ postinstall() {
 	sync
 	systemctl daemon-reload
 	systemctl start rmpp-bluetooth.service || true
+	systemctl restart rmpp-bt-reconnect.service || true
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
@@ -80,6 +81,7 @@ postupgrade() {
 	sync
 	systemctl daemon-reload
 	systemctl start rmpp-bluetooth.service || true
+	systemctl restart rmpp-bt-reconnect.service || true
 	systemctl daemon-reload
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
@@ -110,6 +112,7 @@ predeinstall() {
 	/home/root/.vellum/bin/mount-rw
 	rm -f /usr/lib/rmpp-preload.d/50-rmpp-bt.so
 	rm -f /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+	systemctl stop rmpp-bt-reconnect.service 2>/dev/null || true
 	rm -f /usr/lib/systemd/system/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
 	rm -rf /usr/lib/rmpp-bt
 	sync
@@ -127,6 +130,6 @@ sha512sums="
 8ce09cc1c5c4ff4e74786b9aaee56db31725cf53b5cc22d641d0754579072a68fe5f48105b45a907aab583bfd2b40383b44a10263c44d56b4253ab1655541228  rmpp-bt.rcc
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
 e21a0497314cd0d95b2aee1f1065b5d8e23bc9553f0647cda0ba5480314d3d6b8cfe10096f2d4b6199412cbe36f54c9dce371a8cc6550804687a27cc4fa39e75  rmpp-bluetooth.service
-4569b64ca52adc3a6d331e80c170b901e62093013ffeb133746b965c6c7f4e3672e87b6a6e8a1fe055b61990027a01632e6a2ac4caec3f27a152700d4fa2e39e  rmpp-bt-reconnect.service
-a0b8ba068d0cb6b194f32496ac3ced34d2f6b177792b15de78155a4186cd692aff7d9b32d533682c32a351386770c5c61d95dde8181825a5ef42bd9d0f267023  reconnect
+d1cbcb5e5ff188979cd0da4351a1ba52118ad0114779c7c424964e8f388194abb6f08fb9aca56857e3079fa11ecd57dcc4e1729467545d03f4d5f224222e37cf  rmpp-bt-reconnect.service
+789c401c89985f79b85bab38d34e4ac5b321fc53cc9f0b63fd96fd92292eac6e03fc46c66251e11c398090b86e7453379fb7dc5c652a36e3ba5ce90583cc2907  reconnect
 "
