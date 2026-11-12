@@ -91,3 +91,15 @@ func TestCleanupNothingLeft(t *testing.T) {
 		t.Errorf("plan for a clean tablet: %+v", p)
 	}
 }
+
+func TestSupportedDevice(t *testing.T) {
+	if err := supportedDevice("reMarkable Ferrari\n", "3.29.1.0\n"); err != nil {
+		t.Errorf("Paper Pro on 3.29 refused: %v", err)
+	}
+	for _, c := range [][2]string{{"reMarkable 2.0", "3.29.1.0"}, {"reMarkable Chiappa", "3.29.1.0"}, {"", ""},
+		{"reMarkable Ferrari", "3.30.0.1"}} {
+		if supportedDevice(c[0], c[1]) == nil {
+			t.Errorf("accepted %q %q", c[0], c[1])
+		}
+	}
+}

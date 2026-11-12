@@ -122,8 +122,29 @@ func planCleanup(listing []string, installed map[string]bool) CleanupPlan {
 	return p
 }
 
+// supportedDevice: removal and cleanup only run where the add-ons were made for (reMarkable Paper Pro, OS 3.29),
+// detected like Vellum does (the SoC machine name "Ferrari").
+func supportedDevice(machine, version string) error {
+	if !strings.Contains(machine, "Ferrari") {
+		return fmt.Errorf("this is not a reMarkable Paper Pro (%q): nothing was changed", strings.TrimSpace(machine))
+	}
+	if !strings.HasPrefix(strings.TrimSpace(version), "3.29.") {
+		return fmt.Errorf("the rmpp add-ons are made for OS 3.29, this tablet runs %q: nothing was changed", strings.TrimSpace(version))
+	}
+	return nil
+}
+
+func (t *Tablet) checkSupported() error {
+	machine, _ := t.run("cat /sys/devices/soc0/machine 2>/dev/null", nil, nil)
+	version, _ := t.run("grep -hm1 '^IMG_VERSION=' /usr/share/remarkable/update.conf /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '\"'", nil, nil)
+	return supportedDevice(machine, version)
+}
+
 func (a *App) cleanupPlan() (CleanupPlan, error) {
 	t := a.tablet
+	if err := t.checkSupported(); err != nil {
+		return CleanupPlan{}, err
+	}
 	out, _ := t.run("ls -d "+leftoverGlobs+" 2>/dev/null", nil, nil)
 	installed := map[string]bool{}
 	if t.ok("[ -x " + vellumBin + " ]") {
