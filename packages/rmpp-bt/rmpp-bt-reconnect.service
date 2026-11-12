@@ -1,8 +1,10 @@
 [Unit]
-Description=Reconnect trusted Bluetooth devices after boot (rmpp-bt)
+Description=Reconnect trusted Bluetooth devices after boot and wake (rmpp-bt)
 After=bluetooth.service
-Requires=bluetooth.service
+Wants=bluetooth.service
 
 [Service]
 Type=simple
 ExecStart=/usr/lib/rmpp-bt/reconnect
+Restart=always
+RestartSec=10

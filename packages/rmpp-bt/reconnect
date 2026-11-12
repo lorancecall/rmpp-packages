@@ -1,15 +1,52 @@
 #!/bin/sh
-# After boot, try to reconnect paired, trusted Bluetooth devices for about a minute.
-# Keyboards usually reconnect when a key is pressed; this covers ones that wait for the host.
-sleep 5
-for n in 1 2 3 4 5 6; do
-	pending=0
-	for d in $(bluetoothctl devices Trusted | awk '{print $2}'); do
-		bluetoothctl info "$d" | grep -q "Connected: yes" && continue
-		pending=1
-		timeout 8 bluetoothctl connect "$d" >/dev/null 2>&1
+# Reconnect trusted Bluetooth devices whenever the adapter comes up: at boot and after every wake from sleep.
+# reMarkable's sleep hook (/usr/lib/systemd/system-sleep/sleep-wifi.sh) unloads the Bluetooth driver before
+# sleeping and loads it again on wake, so each wake brings a new adapter with nothing connected. Keyboards
+# usually reconnect on a key press; this covers ones that wait for the host.
+# It also logs adapter power, connects, disconnects and failed attempts: journalctl -u rmpp-bt-reconnect
+
+# One round: try every trusted, unconnected device, up to 6 times about 10 s apart.
+round() {
+	sleep 3
+	for n in 1 2 3 4 5 6; do
+		pending=0
+		for d in $(bluetoothctl devices Trusted | awk '{print $2}'); do
+			bluetoothctl info "$d" | grep -q "Connected: yes" && continue
+			pending=1
+			r=$(timeout 8 bluetoothctl connect "$d" 2>&1 | grep -iE "fail|error|success" | tail -n 1)
+			echo "connect $d (try $n): ${r:-no answer}"
+		done
+		[ "$pending" = 0 ] && return
+		sleep 10
 	done
-	[ "$pending" = 0 ] && exit 0
-	sleep 10
+	echo "gave up for now: a key press on the keyboard should reconnect it; if not, pair it again"
+}
+
+# dbus-monitor prints each signal over several lines; awk turns the ones we need into "path key value".
+# The BEGIN line starts a first round for the adapter that is already up. Devices appearing in a scan
+# (InterfacesAdded of Device1) are not logged.
+dbus-monitor --system \
+	"type='signal',sender='org.bluez',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'" \
+	"type='signal',sender='org.bluez',interface='org.freedesktop.DBus.ObjectManager',member='InterfacesAdded'" |
+awk '
+BEGIN { print "/org/bluez/hci0 Powered true"; fflush() }
+/^signal / { path = ""; iface = ""; key = ""; added = ($0 ~ /member=InterfacesAdded/); if (match($0, /path=[^;]*/)) path = substr($0, RSTART + 5, RLENGTH - 5); next }
+/^ *object path "/ { p = $0; sub(/^ *object path "/, "", p); sub(/".*/, "", p); path = p; next }
+/^ *string "org\.bluez\./ { s = $0; sub(/^ *string "/, "", s); sub(/".*/, "", s); iface = s; next }
+/^ *string "/ { s = $0; sub(/^ *string "/, "", s); sub(/".*/, "", s); key = s; next }
+/variant +boolean/ {
+	if ((iface == "org.bluez.Adapter1" && key == "Powered") ||
+	    (!added && iface == "org.bluez.Device1" && (key == "Connected" || key == "Paired" || key == "Bonded"))) {
+		print path, key, $NF; fflush()
+	}
+}' |
+while read -r path key value; do
+	dev=$(echo "${path##*/dev_}" | tr _ :)
+	case "$key" in
+	Powered)
+		echo "adapter ${path##*/} powered: $value"
+		[ "$value" = true ] && round
+		;;
+	*) echo "$dev $key: $value" ;;
+	esac
 done
-exit 0
