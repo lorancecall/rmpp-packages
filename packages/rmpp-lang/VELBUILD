@@ -1,6 +1,6 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang
-pkgver=0.3.0
+pkgver=0.3.1
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"
@@ -91,7 +91,7 @@ predeinstall() {
 	/home/root/.vellum/bin/mount-restore
 }
 sha512sums="
-79f75cbfad3024a93c18f1eacf7dad44dafb0edc4aedc655edfa82a250d20fbfd741732081fbb06f7225794f78e31f95e18ad2de608fe93a9fe695b4a3b5a1a5  librmpp-lang.so
+2583f55d48e58b1bb8b523ab3b12d16b691e9ba0d23dd7ef955b369355dab843da22777c957e3d603e7cce43a3fee924006005fed552c1dbd4a87df60770d4c7  librmpp-lang.so
 a41fecbc15420b09616f2507b255c5c9ac060ebd37942c65ef40e255372dad43fab6eab36f1344bd1de69cf01af51f9cc2271d033a955f324df09b0eec287e12  rmpp-lang.rcc
 33ef32efb82e502378f22887fe81ec90825ea7564557ad247bf37134c73641d8d00aeb1155f615b85d48cf27844794ea03ec00a7c16288e4bd3e12c4311581b3  rmpp-lang
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
