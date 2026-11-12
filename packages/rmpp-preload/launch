@@ -1,8 +1,27 @@
 #!/bin/sh
-# Start xochitl with every library in /usr/lib/rmpp-preload.d added to LD_PRELOAD.
+# rmpp-preload launcher, in /home (Vellum's share folder). The only file on the root file system is xochitl's
+# drop-in zz-rmpp-preload.conf, which runs this when it exists and plain xochitl when it does not (after a factory
+# reset, or with /home not mounted).
+#
+#  boot.d/*  run once per boot, in the background (load the Bluetooth driver, start Tailscale, ...)
+#  env.d/*.env  sourced before xochitl starts (each add-on's resource paths, e.g. RMPPBT_RCC)
+#  preload.d/*.so  added to LD_PRELOAD, with /usr/lib/rmpp-preload.d/*.so (older and hand-made installs)
 # An LD_PRELOAD that is already set (for example xovi's) is kept in front.
+P=/home/root/.vellum/share/rmpp-preload
+
+if [ ! -e /run/rmpp-preload.booted ]; then
+	: > /run/rmpp-preload.booted
+	for h in "$P"/boot.d/*; do
+		[ -x "$h" ] && ("$h" >/dev/null 2>&1 &)
+	done
+fi
+
+for e in "$P"/env.d/*.env; do
+	[ -r "$e" ] && . "$e"
+done
+
 extra=""
-for f in /usr/lib/rmpp-preload.d/*.so; do
+for f in "$P"/preload.d/*.so /usr/lib/rmpp-preload.d/*.so; do
 	[ -e "$f" ] && extra="$extra $(readlink -f "$f")"
 done
 extra=${extra# }
