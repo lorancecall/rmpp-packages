@@ -1,6 +1,6 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-refresh
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"
@@ -67,6 +67,6 @@ predeinstall() {
 	/home/root/.vellum/bin/mount-restore
 }
 sha512sums="
-2f82a0bec13d0edb95409745be784f8322b2fef420fdc78eaafd5409b20807386dd3be0c87fda8e56c9b8e9355a58e18fcec1fa99f5e681e3607339e001e51ae  librmpp-refresh.so
+a568808ebe7676fe4c253166c8e907818ab6bdde88a4b4a901de9ebf4d8c66014438aa6c0feb396d7f205dbbeee5190fcfac026a41ec7a362c102707f020a9f5  librmpp-refresh.so
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
 "
