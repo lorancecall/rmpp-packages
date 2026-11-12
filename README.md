@@ -1,6 +1,27 @@
 # rmpp-packages
 
-A [Vellum](https://github.com/vellum-dev/vellum) package repository for the reMarkable Paper Pro (OS 3.29).
+A personal collection of add-ons for the reMarkable Paper Pro (OS 3.29): code I tuned for my own tablet, packaged
+so I can install it in one go. It is a [Vellum](https://github.com/vellum-dev/vellum) package repository only
+because that was the easiest way to gather my own packages in one place. Getting started:
+**[lorancecall.github.io/rmpp](https://lorancecall.github.io/rmpp/)**.
+
+- **Not an official repository.** I don't plan to submit these packages to Vellum's main repository or any other
+  package index myself.
+- **Take what is useful.** If a package helps you and you would like it installable from Vellum's main repository
+  or another package manager, feel free to move it there (keep the license, GPL-3.0). No need to ask.
+- **Use it freely**, as is: it is tested on my own tablet only, with no support promised.
+
+The same goes for all my rmpp projects, packaged here or not:
+
+| Project | What it is |
+|---|---|
+| [rmpp-lang](https://github.com/lorancecall/rmpp-lang) | Keyboards and fonts per language (Korean, Japanese, Chinese, Russian, ...) as add-ons |
+| [rmpp-bt](https://github.com/lorancecall/rmpp-bt) | Bluetooth settings page and keyboard support |
+| [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale) | Tailscale with a Settings page, SSH over Tailscale |
+| [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh screen button (full e-paper refresh) |
+| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | On-device handwriting recognition (convert to text), tools to collect handwriting and train models |
+| [rmpp-hwr-db](https://github.com/lorancecall/rmpp-hwr-db) | Open handwriting dataset written on the Paper Pro (CC BY 4.0; contributions welcome) |
+| rmpp setup ([app/](app/)) | Desktop installer for all of the above (Windows, macOS, Linux) |
 
 | Package | What it does |
 |---|---|
@@ -147,9 +168,8 @@ Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `
 
 ## Sources
 
-- [rmpp-bt](https://github.com/lorancecall/rmpp-bt)
-- [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale)
-- [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh)
+The packages are built from the projects listed at the top (rmpp-lang, rmpp-bt, rmpp-tailscale, rmpp-refresh;
+rmpp-hwr comes from its own releases).
 
 Packages are built and signed by GitHub Actions (`.github/workflows/publish.yml`) and published with GitHub Pages.
 
