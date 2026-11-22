@@ -15,7 +15,7 @@ The same goes for all my rmpp projects, packaged here or not:
 
 | Project | What it is |
 |---|---|
-| [rmpp-lang](https://github.com/lorancecall/rmpp-lang) | Keyboards and fonts per language (Korean, Japanese, Chinese, Russian, ...) as add-ons |
+| [rmpp-lang](https://github.com/lorancecall/rmpp-lang) | Keyboards and fonts per language (Korean, Japanese, Chinese, Russian, Bulgarian, ...) as add-ons |
 | [rmpp-bt](https://github.com/lorancecall/rmpp-bt) | Bluetooth settings page and keyboard support |
 | [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale) | Tailscale with a Settings page, SSH over Tailscale |
 | [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh screen button (full e-paper refresh) |
@@ -25,7 +25,7 @@ The same goes for all my rmpp projects, packaged here or not:
 
 | Package | What it does |
 |---|---|
-| `rmpp-lang` | Languages: on-screen, Bluetooth, USB and Type Folio keyboards and fonts per language (Settings > Languages); each language is an add-on package `rmpp-lang-<code>` (`rmpp-lang-ko` Korean, `rmpp-lang-ja`, `rmpp-lang-zh`, `rmpp-lang-ru`) |
+| `rmpp-lang` | Languages: on-screen, Bluetooth, USB and Type Folio keyboards and fonts per language (Settings > Languages); each language is an add-on package `rmpp-lang-<code>` (`rmpp-lang-ko` Korean, `rmpp-lang-ja`, `rmpp-lang-zh`, `rmpp-lang-ru`, `rmpp-lang-bg`) |
 | `rmpp-bt` | Bluetooth page in Settings (search, pair, connect, forget), Bluetooth toggle in quick settings, Bluetooth on at boot, per-keyboard "Type Folio mode" |
 | `rmpp-tailscale` | Tailscale with a Settings page: on/off, log in by scanning a QR code, status and tailnet devices, updates; SSH to the tablet over Tailscale (userspace networking, ~70 MB in /home) |
 | `rmpp-refresh` | Refresh button in the notebook toolbar (right above the three dots) and in the library sidebar (right above Trash): one tap redraws the whole screen and clears ghosting; also redraws once when the on-screen keyboard opens |
