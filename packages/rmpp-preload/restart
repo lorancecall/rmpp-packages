@@ -15,8 +15,22 @@ if [ -n "$(find /usr/lib/rmpp -name '*.old' 2>/dev/null | head -n 1)" ] || [ -n 
 		sync
 	}
 fi
+
+# PIDs that still use a deleted file of /usr/lib/rmpp: a library (maps) or a script a shell reads (fd)
+holders() {
+	for p in /proc/[0-9]*; do
+		{ grep -q ' /usr/lib/rmpp/.* (deleted)$' "$p/maps" 2>/dev/null ||
+			ls -l "$p/fd" 2>/dev/null | grep -q ' /usr/lib/rmpp/.* (deleted)$'; } && echo "${p#/proc/}"
+	done
+}
+# an add-on's service started from a replaced file (after an upgrade or Restore) keeps / busy: restart it, so it
+# runs the new file. Found by what it holds, not by name; xochitl was restarted above.
+for pid in $(holders); do
+	unit=$(sed -n 's#^0::.*/\([^/]*\.service\)$#\1#p' "/proc/$pid/cgroup" 2>/dev/null)
+	case "$unit" in "" | xochitl.service) ;; *) systemctl restart "$unit" 2>/dev/null || true ;; esac
+done
+
 # a package script could not go back to read-only while xochitl held a replaced library: do it now
-# (a process that still has a deleted file of / open keeps it busy for a moment: retry, then name it in the journal)
 i=0
 while grep -q ' / [^ ]* rw[ ,]' /proc/mounts && [ $i -lt 10 ]; do
 	sync
@@ -25,7 +39,6 @@ while grep -q ' / [^ ]* rw[ ,]' /proc/mounts && [ $i -lt 10 ]; do
 	sleep 1
 done
 if grep -q ' / [^ ]* rw[ ,]' /proc/mounts; then
-	held=$(grep -l ' (deleted)$' /proc/[0-9]*/maps 2>/dev/null | while read -r m; do
-		grep ' (deleted)$' "$m" | grep -q ' /usr/\| /etc/\| /lib' && cat "${m%/maps}/comm"; done | sort -u | tr '\n' ' ')
-	echo "rmpp restart: / stays read-write until the next boot (deleted files still open: ${held:-unknown})"
+	held=$(for pid in $(holders); do cat "/proc/$pid/comm"; done | sort -u | tr '\n' ' ')
+	echo "rmpp restart: / stays read-write until the next boot (still using deleted rmpp files: ${held:-none found})"
 fi
