@@ -1,0 +1,51 @@
+# rmpp-hwr handwriting models for the rmpp installer (listed under rmpp-hwr; each is its own Vellum package)
+id=rmpp-hwr-ko
+type=vellum
+package=rmpp-hwr-ko
+needs=rmpp-hwr
+default=1
+label=└ ko Korean model
+short_ko=한국어 필기 모델
+short_en=Korean handwriting model
+detail_ko=한국어 필기 인식 모델 (PP-OCRv5, 손글씨로 미세조정). 약 13 MB.
+detail_en=Korean handwriting model (PP-OCRv5, fine-tuned on handwriting). About 13 MB.
+---
+id=rmpp-hwr-en
+type=vellum
+package=rmpp-hwr-en
+needs=rmpp-hwr
+label=└ en English model
+short_ko=영어 필기 모델
+short_en=English handwriting model
+detail_ko=영어 인식 기본 모델 (PaddleOCR PP-OCRv5). 약 8 MB.
+detail_en=English base model (PaddleOCR PP-OCRv5). About 8 MB.
+---
+id=rmpp-hwr-zh
+type=vellum
+package=rmpp-hwr-zh
+needs=rmpp-hwr
+label=└ zh Chinese model
+short_ko=중국어 필기 모델
+short_en=Chinese handwriting model
+detail_ko=중국어 인식 기본 모델 (PaddleOCR PP-OCRv5). 약 17 MB.
+detail_en=Chinese base model (PaddleOCR PP-OCRv5). About 17 MB.
+---
+id=rmpp-hwr-ja
+type=vellum
+package=rmpp-hwr-ja
+needs=rmpp-hwr
+label=└ ja Japanese model
+short_ko=일본어 필기 모델
+short_en=Japanese handwriting model
+detail_ko=일본어 인식 기본 모델 (PaddleOCR PP-OCRv5). 약 17 MB.
+detail_en=Japanese base model (PaddleOCR PP-OCRv5). About 17 MB.
+---
+id=rmpp-hwr-latin
+type=vellum
+package=rmpp-hwr-latin
+needs=rmpp-hwr
+label=└ latin Latin-script model
+short_ko=라틴 문자 필기 모델
+short_en=Latin-script handwriting model
+detail_ko=라틴 문자 언어(프랑스어, 독일어, 스페인어 등) 기본 모델 (PP-OCRv5). 약 8 MB.
+detail_en=Latin-script languages (French, German, Spanish, ...) base model|(PaddleOCR PP-OCRv5). About 8 MB.

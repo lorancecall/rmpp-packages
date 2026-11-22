@@ -33,9 +33,6 @@ vellum add rmpp-lang rmpp-lang-ko     # an add-on with a language
 Each package installs what it depends on (`rmpp-preload` always): see [packages.md](packages.md). xochitl restarts
 once, about 15 seconds after the command ends, also when several packages are installed together.
 
-Mods that are not Vellum packages yet (see the end of [packages.md](packages.md)) install from their project's
-GitHub release: see that project's `docs/install.md`.
-
 ## Later
 
 | When | Command |

@@ -46,9 +46,6 @@ Installing, upgrading or removing several add-ons restarts the Paper Pro's scree
     other versions.
   - If **Repair Vellum** resets Vellum's repository list, the rmpp packages stop updating: run rmpp setup again
     (or step 2 of [manual-install.md](manual-install.md)).
-  - Mods that are not Vellum packages (below) do not appear in reManager.
-- **rmpp mods that are not Vellum packages yet** (end of [packages.md](packages.md)): rmpp setup installs them from
-  their GitHub release; Vellum does not track them, so only **Remove everything** removes them.
 
 ## Where the packages come from
 

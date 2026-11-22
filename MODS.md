@@ -46,6 +46,9 @@ codes, e.g. Japanese typed in Hangul needs `ko`): its package then depends on `r
 it too (per-input-method `requires@<method>=` lines are read by rmpp-lang at run time, not here). With `--catalog DIR` (`-Catalog`), `addons` may also name a file in DIR.
 `--list` (`-List`) prints the catalog, add-ons included, and exits.
 
+Hand-written add-on lists live in [`addons/`](addons/) (for example rmpp-hwr's models, `addons/rmpp-hwr.txt`) and are
+published next to the generated ones, at `https://lorancecall.github.io/rmpp-packages/addons/<file>`.
+
 ## How a `release` mod is installed
 
 The computer downloads every asset from `https://github.com/<repo>/releases/latest/download/<asset>`

@@ -61,6 +61,14 @@ def main():
     for m in mods.values():
         for p in m.get("package", "").split():
             menu.setdefault(p, m.get("short_en", m["id"]))
+    for f in sorted((ROOT / "addons").glob("*.txt")):  # hand-written add-on lists (rmpp-hwr's models, ...)
+        for block in f.read_text(encoding="utf-8").split("\n---"):
+            kv = dict(l.split("=", 1) for l in block.splitlines() if "=" in l and not l.startswith("#"))
+            if kv.get("package"):
+                parent = next((m.get("short_en", m["id"]) for m in mods.values()
+                               if m.get("package") in kv.get("needs", "").split()), "")
+                menu.setdefault(kv["package"], f"{kv.get('short_en', kv['package'])}, under {parent}" if parent
+                                else kv.get("short_en", kv["package"]))
     needed_by = {n: sorted(p["name"] for p in pkgs.values() if n in p["deps"]) for n in pkgs}
 
     def closure(n, seen=None):

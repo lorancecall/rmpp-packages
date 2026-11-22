@@ -13,9 +13,6 @@ needs it); `rmpp-preload` stays while any add-on is installed. The add-on's sett
 reinstall picks them up again. To delete one add-on's data, remove `/home/root/.config/<package>` and
 `/home/root/.local/share/<package>`; step 3 removes all of it.
 
-Mods that are not Vellum packages yet (end of [packages.md](packages.md)) cannot be removed one by one here: use
-step 2, or their project's `docs/install.md`.
-
 ## 2. Everything
 
 Removes every rmpp add-on, every rmpp file on the system (`/usr/lib/rmpp` and xochitl's drop-in) and the rmpp
