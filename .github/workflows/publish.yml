@@ -40,6 +40,10 @@ jobs:
           pip install -q pyside6-essentials==6.10.1
           RCC=pyside6-rcc python3 scripts/lang-addons.py
 
+      - name: docs/packages.md is current
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/packages-doc.py --check
+
       - name: Build packages
         run: |
           for p in packages/*/; do ./scripts/build-package.sh "$(basename "$p")"; done
