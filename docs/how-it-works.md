@@ -54,3 +54,15 @@ Each package is built from its project's GitHub release (the `source=` lines of 
 (`.github/workflows/publish.yml`) builds and signs them on every push to `main` and publishes the repository with
 GitHub Pages. Every package and the index are signed with the key `lorancecall-rmpp`; its public half is at
 `https://lorancecall.github.io/rmpp-packages/lorancecall-rmpp.rsa.pub`.
+
+## What a package takes care of itself
+
+Installing and removing are described entirely in each package's `VELBUILD`, so a new add-on needs no change in
+the installer or the removal:
+
+- `postinstall` / `postupgrade` put its files under `/usr/lib/rmpp/<package>/` (and a link in `preload.d/`),
+  `postosupgrade` puts them back after an OS update (**Restore**).
+- `predeinstall` removes those files again; when Vellum purges the package (`VELLUM_PURGE=1`, rmpp setup's
+  **Also delete their settings and data**) it also deletes its settings and data in `/home`.
+- **Remove everything** removes every installed package that this repository provides (Vellum knows where each
+  package came from), then the repository entry, then whatever is left of `/usr/lib/rmpp` and xochitl's drop-in.
