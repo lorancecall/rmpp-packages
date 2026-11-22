@@ -5,7 +5,7 @@
 A window for installing the rmpp mods on a reMarkable Paper Pro, for Windows, macOS and Linux. It does what
 `installer/install-rmpp.sh` and `install-rmpp.ps1` do, without a terminal:
 
-1. **Connect**: tablet address (`10.11.99.1` over USB, or its Wi-Fi address). The tablet's root password (Settings ›
+1. **Connect**: Paper Pro address (`10.11.99.1` over USB, or its Wi-Fi address). The Paper Pro's root password (Settings ›
    General › Help › About › Copyrights and licenses, with developer mode on) is asked once; the app then adds an SSH
    key, `~/.ssh/id_ed25519_rmpp`, the same key the scripts use.
 2. **Choose**: the mods of the catalog (`mods.txt` and each repository's `rmpp-mod.conf`, see [MODS.md](../MODS.md)),
@@ -18,7 +18,7 @@ A window for installing the rmpp mods on a reMarkable Paper Pro, for Windows, ma
    without Vellum (GitHub release or by hand), rmpp-preload, and this repository's entry and key. Optionally Vellum
    itself (`/home/root/.vellum` and its lines in `.bashrc`). Packages from other repositories are never touched; while
    any are installed, rmpp-preload and Vellum stay.
-5. **Clean up leftover system files** (same place): for a tablet that was factory-reset with the add-ons on it. A
+5. **Clean up leftover system files** (same place): for a Paper Pro that was factory-reset with the add-ons on it. A
    reset wipes `/home` (Vellum and its removal scripts included) but not the root file system, so the add-ons'
    files in `/usr/lib`, their systemd units and xochitl's `zz-rmpp-preload.conf` stay and keep loading. This lists
    every rmpp system file whose package is not installed, asks, stops the units, removes the files and restarts
@@ -69,7 +69,7 @@ wails dev                               # live window while editing frontend/dis
 The frontend is plain HTML/CSS/JS in `frontend/dist` (no npm build). CI (`.github/workflows/app.yml`) builds all
 three on every change to `app/`; a tag `app-v*` attaches them to a draft release.
 
-Read-only check against the catalog and a tablet (installs nothing):
+Read-only check against the catalog and a Paper Pro (installs nothing):
 
 ```sh
 RMPP_HOST=10.11.99.1 go test -tags smoke -run Smoke -v .

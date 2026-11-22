@@ -24,7 +24,7 @@ adding a mod is one line: see [MODS.md](../MODS.md).
 | **Remove unticked installed** | removes the installed mods you unticked ([uninstall.md](uninstall.md#1-one-add-on)) |
 | **Restore** | after a reMarkable OS update: puts the add-ons' system files back (`vellum reenable`) |
 | **Remove everything** | every rmpp add-on and system file ([uninstall.md](uninstall.md#2-everything)) |
-| **Clean up leftover system files** | after a factory reset ([uninstall.md](uninstall.md#before-a-factory-reset-or-handing-the-tablet-on)) |
+| **Clean up leftover system files** | after a factory reset ([uninstall.md](uninstall.md#before-a-factory-reset-or-handing-the-paper-pro-on)) |
 
 ## Script options
 
@@ -32,7 +32,7 @@ Windows: add them after `-File install-rmpp.ps1`, with `powershell` or `pwsh`.
 
 | | Linux / macOS | Windows |
 |---|---|---|
-| tablet address | `sh install-rmpp.sh 10.11.99.1` | `-TabletHost 10.11.99.1` |
+| Paper Pro address | `sh install-rmpp.sh 10.11.99.1` | `-TabletHost 10.11.99.1` |
 | pick mods, no menu | `--packages rmpp-bt,rmpp-tailscale` | `-Packages rmpp-bt,rmpp-tailscale` |
 | default selection, no questions | `--yes` | `-Yes` |
 | language | `--lang ko` or `--lang en` | `-Lang ko` or `-Lang en` |

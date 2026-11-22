@@ -7,7 +7,7 @@ catalog, so a new mod needs no installer change:
 2. Add the repository (`owner/name`) as a line in [`mods.txt`](mods.txt). The installers download
    `https://lorancecall.github.io/rmpp-packages/mods.txt` each time they run, so the next run shows the mod.
 
-Only add repositories you trust: a `type=release` mod runs its own install script as root on the tablet.
+Only add repositories you trust: a `type=release` mod runs its own install script as root on the Paper Pro.
 
 ## rmpp-mod.conf
 
@@ -23,7 +23,7 @@ Only add repositories you trust: a `type=release` mod runs its own install scrip
 | `detail_ko`, `detail_en` | required | full description under the list: up to 3 lines separated by `\|`, each within about 64 columns |
 | `needs` | | Vellum packages installed first (for example `rmpp-preload`) |
 | `assets` | `release` | release asset names (space separated) downloaded from `releases/latest`; must include `rmpp-install.sh` |
-| `check` | `release` | shell test run on the tablet; success = installed (for the "installed" mark) |
+| `check` | `release` | shell test run on the Paper Pro; success = installed (for the "installed" mark) |
 | `addons` | | URL of the mod's add-on list (below); its add-ons are listed right under the mod |
 
 ## Add-ons
@@ -52,12 +52,12 @@ published next to the generated ones, at `https://lorancecall.github.io/rmpp-pac
 ## How a `release` mod is installed
 
 The computer downloads every asset from `https://github.com/<repo>/releases/latest/download/<asset>`
-(the tablet needs no TLS certificates), copies them to `/home/root/.cache/rmpp-mods/<id>/` on the tablet and
-runs `sh rmpp-install.sh` there as root, then deletes the folder. The script must follow the tablet rules:
+(the Paper Pro needs no TLS certificates), copies them to `/home/root/.cache/rmpp-mods/<id>/` on the Paper Pro and
+runs `sh rmpp-install.sh` there as root, then deletes the folder. The script must follow the Paper Pro rules:
 
 - the root file system is read-only: `mount -o remount,rw /`, copy to `*.new` then `mv`, `mount -o remount,ro /`
   at the end (not Vellum's `mount-rw`: it unmounts `/etc` recursively and drops `/etc/dropbear`, the SSH host key);
-- never `systemctl stop xochitl` (it powers the tablet off). With rmpp-preload 0.2+ do not restart xochitl
+- never `systemctl stop xochitl` (it powers the Paper Pro off). With rmpp-preload 0.2+ do not restart xochitl
   yourself: re-arm the shared timer (`systemd-run --unit=rmpp-restart-xochitl --on-active=15 ... /usr/lib/rmpp/restart`,
   see rmpp-hwr's `rmpp-install.sh`), so one restart serves the whole installation;
 - add-ons for xochitl go to `/usr/lib/rmpp/<mod>/` with a link in `/usr/lib/rmpp/preload.d/` (loaded by

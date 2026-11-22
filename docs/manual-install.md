@@ -1,6 +1,6 @@
 # Installing without rmpp setup
 
-rmpp setup does everything on this page for you. Use these steps if you prefer the command line on the tablet, or
+rmpp setup does everything on this page for you. Use these steps if you prefer the command line on the Paper Pro, or
 already use [Vellum](https://github.com/vellum-dev/vellum). They are the same for every rmpp add-on: only the
 package names differ ([packages.md](packages.md)).
 
@@ -8,13 +8,13 @@ You need developer mode and SSH as root: [ssh.md](ssh.md).
 
 ## 1. Vellum
 
-Skip this if `vellum` already runs on the tablet. Otherwise install it as its
-[README](https://github.com/vellum-dev/vellum-cli) describes (one command on the tablet, which checks
+Skip this if `vellum` already runs on the Paper Pro. Otherwise install it as its
+[README](https://github.com/vellum-dev/vellum-cli) describes (one command on the Paper Pro, which checks
 the download against a published hash).
 
 ## 2. The rmpp package repository
 
-On the tablet, once:
+On the Paper Pro, once:
 
 ```sh
 wget -qO- https://lorancecall.github.io/rmpp-packages/install.sh | sh
@@ -44,5 +44,5 @@ GitHub release: see that project's `docs/install.md`.
 | After a reMarkable OS update | `vellum reenable` (puts the add-ons' system files back) |
 | Remove | see [uninstall.md](uninstall.md) |
 
-`vellum update` failing with an untrusted signature means the tablet lacks the current public key: run step 2 again.
+`vellum update` failing with an untrusted signature means the Paper Pro lacks the current public key: run step 2 again.
 Installed add-ons keep working in the meantime.

@@ -111,7 +111,7 @@ remove: [manual-install.md](manual-install.md), [uninstall.md](uninstall.md).
 |---|---|---|---|---|
 {chr(10).join(rows)}
 
-"Installs with it" counts everything pulled in, also indirectly. All packages also check the tablet (reMarkable
+"Installs with it" counts everything pulled in, also indirectly. All packages also check the device (reMarkable
 Paper Pro, OS 3.29) and refuse to install elsewhere.
 """
     if rel_rows:
