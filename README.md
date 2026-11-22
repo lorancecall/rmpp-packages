@@ -167,6 +167,9 @@ vellum add rmpp-bt rmpp-tailscale rmpp-refresh
 **After a reMarkable OS update**, run `vellum reenable` (the installer does this for you): an OS update replaces the root file system, where these add-ons live.
 
 Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `vellum del rmpp-korean` on a tablet that still has it).
+To remove **everything** rmpp put on the tablet (packages and system files, also older versions' files), use the
+app's **Remove everything** or `sh install-rmpp.sh <tablet> --uninstall` (`-Uninstall` in `install-rmpp.ps1`);
+add `--purge` to delete the add-ons' settings and data in `/home` as well, `--vellum` to remove Vellum too.
 
 ## How the add-ons load (and how that differs from xovi)
 
@@ -174,26 +177,36 @@ Remove with `vellum del rmpp-bt rmpp-tailscale rmpp-refresh rmpp-preload` (and `
 over SSH, or a starter such as xovi-tripletap), and a reboot returns the tablet to the stock OS. Its README asks
 not to start it automatically on boot.
 
-These add-ons load **on every boot**, with no step after a restart: `rmpp-preload` adds a systemd drop-in for
-xochitl (`zz-rmpp-preload.conf`) and a launcher on the root file system, which loads `/usr/lib/rmpp-preload.d/*.so`
-into xochitl. It keeps xovi working if you also use it.
+These add-ons load **on every boot**, with no step after a restart. Everything they put on the root file system is
+in **one folder, `/usr/lib/rmpp`**: rmpp-preload's launcher, each add-on's library and resources
+(`/usr/lib/rmpp/<add-on>/`), and their systemd units (copied to `/run` at boot). The only file outside it is
+xochitl's drop-in `/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf`, which starts xochitl through
+the launcher (plain xochitl if the launcher is gone). The launcher loads `/usr/lib/rmpp/preload.d/*.so` into
+xochitl and keeps xovi working if you also use it. Settings and large data (Tailscale, handwriting models) stay in
+`/home`.
+
+The libraries cannot live in `/home`: on the Paper Pro, xochitl starts before the encrypted `/home` is mounted
+(it is unlocked only once xochitl runs).
+
+Installing, upgrading or removing several add-ons restarts the tablet's screen **once**, at the end.
 
 | | xovi | rmpp add-ons |
 |---|---|---|
 | After a reboot | stock OS until started again | add-ons on |
-| Files | `/home` only | each add-on's library and resources in `/usr/lib/<add-on>`, its systemd units, the boot hook; settings and data in `/home` |
+| Files | `/home` only | `/usr/lib/rmpp` and xochitl's drop-in; settings and data in `/home` |
 | Factory reset | removes it | leaves the system files: see below |
 | After an OS update | start again | **Restore** in the app (`vellum reenable`) |
 | Developer mode | needed; off only with reMarkable's recovery application | same |
 
 ## Before you factory-reset, sell or return the tablet
 
-The add-ons live on the tablet's root file system (`/usr/lib`), which a factory reset does **not** wipe: a reset
-removes `/home` (your files, Vellum and its removal scripts), so the add-ons stay and keep loading. Developer mode
-also stays on after a reset: only reMarkable's recovery application turns it off (and rewrites the system).
+The add-ons live on the tablet's root file system (`/usr/lib/rmpp`), which a factory reset does **not** wipe: a
+reset removes `/home` (your files, Vellum and its removal scripts), so the add-ons stay and keep loading. Developer
+mode also stays on after a reset: only reMarkable's recovery application turns it off (and rewrites the system).
 
-- Before a reset: in the rmpp setup app, **Remove everything** (or `vellum del` the packages, then `rmpp-preload`).
-- Already reset: connect with the app and use **Clean up leftover system files**.
+- Before a reset: in the rmpp setup app, **Remove everything**, or `install-rmpp.sh <tablet> --uninstall`.
+- Already reset: connect with the app and use **Clean up leftover system files**, or run the same `--uninstall`
+  (it deletes `/usr/lib/rmpp` and the drop-in even without Vellum).
 - Handing the tablet over: reMarkable's recovery application returns it to the factory state, developer mode off.
 
 ## Sources

@@ -80,7 +80,8 @@ VELBUILD = """\
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang-{code}
 pkgver={version}
-pkgrel=0
+# r1: layouts in /usr/lib/rmpp/rmpp-lang/languages (rmpp-preload's /usr/lib/rmpp layout, rmpp-lang 0.3.2)
+pkgrel=1
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="{desc}"
@@ -94,7 +95,10 @@ source="
 options="!check !fhs !strip"
 
 # Files: /home/root/.local/share/rmpp-lang/languages/{code}/ (found by rmpp-lang while it runs){rcc_note}
-# Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+# Never `systemctl stop xochitl`: that powers the tablet off. Scripts re-arm the transient timer
+# rmpp-restart-xochitl instead of restarting xochitl, so a transaction restarts it once. A layout xochitl may have
+# loaded is renamed to .old or moved to /usr/lib/rmpp/.trash, never deleted (/usr/lib/rmpp/restart deletes it).
+# Plain `mount -o remount,rw|ro /`: Vellum's mount-rw also drops the /etc/dropbear bind mount (SSH host key).
 
 package() {{
 	mkdir -p "$pkgdir"/home/root/.local/share/rmpp-lang/languages/{code}
@@ -102,31 +106,20 @@ package() {{
 {rcc_package}{license_package}}}
 
 postinstall() {{
-	/home/root/.vellum/bin/mount-rw
-	mkdir -p /usr/lib/rmpp-lang/languages
-{rcc_copy}	sync
-	[ -x /usr/bin/rmpp-lang ] && /usr/bin/rmpp-lang lang on {code} || true
-{restart}	/home/root/.vellum/bin/mount-restore
-}}
+{rcc_copy}	[ -x /usr/lib/rmpp/rmpp-lang/rmpp-lang ] && /usr/lib/rmpp/rmpp-lang/rmpp-lang lang on {code} || true
+{restart}}}
 
 postupgrade() {{
-	/home/root/.vellum/bin/mount-rw
-	mkdir -p /usr/lib/rmpp-lang/languages
-{rcc_copy}	sync
-{restart}	/home/root/.vellum/bin/mount-restore
+{rcc_copy}{restart}	true
 }}
 
 # `vellum reenable` after an OS update: the root file system is already writable here.
 postosupgrade() {{
-	mkdir -p /usr/lib/rmpp-lang/languages
-{rcc_copy}	sync
+{rcc_osupgrade}	true
 }}
 
 predeinstall() {{
-	/home/root/.vellum/bin/mount-rw
-	rm -f /usr/lib/rmpp-lang/languages/{code}.rcc
-	sync
-{restart}	/home/root/.vellum/bin/mount-restore
+{rcc_remove}{restart}	true
 }}
 sha512sums="
 {sums}
@@ -181,27 +174,43 @@ def main():
         fonts_license = (built / "LICENSE-fonts").exists()
         has_fonts = (built / "fonts").is_dir()
         sums = "\n".join(f"{hashlib.sha512((out / f).read_bytes()).hexdigest()}  {f}" for f in files)
-        rcc_copy = (f"\tcp /home/root/.vellum/share/rmpp-lang-{code}/{code}.rcc /usr/lib/rmpp-lang/languages/{code}.rcc.new"
-                    f" && chmod 644 /usr/lib/rmpp-lang/languages/{code}.rcc.new"
-                    f" && mv -f /usr/lib/rmpp-lang/languages/{code}.rcc.new /usr/lib/rmpp-lang/languages/{code}.rcc\n"
-                    if rcc.exists() else "")
-        restart = ("\tsystemctl reset-failed xochitl 2>/dev/null || true\n\tsystemctl restart xochitl\n\tsleep 3\n"
+        L = "/usr/lib/rmpp/rmpp-lang/languages"
+        put = (f"\tmkdir -p {L}\n"
+               f"\tcp /home/root/.vellum/share/rmpp-lang-{code}/{code}.rcc {L}/{code}.rcc.new && chmod 644 {L}/{code}.rcc.new"
+               f" && {{ [ ! -e {L}/{code}.rcc ] || mv -f {L}/{code}.rcc {L}/{code}.rcc.old; }}"
+               f" && mv -f {L}/{code}.rcc.new {L}/{code}.rcc\n")
+        rw = "\tmount -o remount,rw /\n"
+        ro = '\tsync\n\tmount -o remount,ro / || echo "note: / stays read-write until xochitl restarts"\n'
+        rcc_copy = rw + put + ro if rcc.exists() else ""
+        rcc_osupgrade = put + "\tsync\n" if rcc.exists() else ""
+        rcc_remove = (rw + "\tmkdir -p /usr/lib/rmpp/.trash\n"
+                      f"\t[ ! -e {L}/{code}.rcc ] || mv {L}/{code}.rcc /usr/lib/rmpp/.trash/{code}.rcc.$$\n" + ro
+                      if rcc.exists() else "")
+        # layouts are registered when xochitl starts: restart (once per transaction) only for add-ons that have them
+        restart = ("\t# one xochitl restart per Vellum transaction: (re)arm the timer, so the last package script wins\n"
+                   "\tsystemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true\n"
+                   "\tsystemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \\\n"
+                   "\t\t/bin/sh -c '[ -x /usr/lib/rmpp/restart ] && exec /usr/lib/rmpp/restart; systemctl reset-failed xochitl; systemctl restart xochitl' || \\\n"
+                   "\t\t{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }\n"
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
-            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), min_core=c.get("min_core", "0.1.0"),
+            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"),
+            # layouts in /usr/lib/rmpp/rmpp-lang/languages need rmpp-lang 0.3.2 or later (rmpp-lang#12)
+            min_core=max(c.get("min_core", "0.1.0"), "0.3.2", key=lambda v: tuple(int(x) for x in v.split("."))),
             requires="".join(f" {p}" for p in req_pkgs),
             desc=pkgdesc(c.get("summary_en", c.get("name", code))),
             # extra licenses of bundled data (dictionaries...), per add-on in lang-addons.conf: license.<code>=
             license="GPL-3.0-only" + "".join(f" AND {x}" for x in cfg.get(f"license.{code}", "").split())
                     + (" AND custom" if has_fonts else ""),
             sources="\n".join(files), sums=sums,
-            rcc_note=(f"\n# and {code}.rcc (keyboard layouts), copied to /usr/lib/rmpp-lang/languages/: xochitl loads it"
+            rcc_note=(f"\n# and {code}.rcc (keyboard layouts), copied to /usr/lib/rmpp/rmpp-lang/languages/: xochitl loads it"
                       " at start, before /home is mounted" if rcc.exists() else ""),
             rcc_package=(f'\tinstall -Dm644 "$srcdir"/{code}.rcc "$pkgdir"/home/root/.vellum/share/rmpp-lang-{code}/{code}.rcc\n'
                          if rcc.exists() else ""),
             license_package=(f'\tinstall -Dm644 "$srcdir"/{code}/LICENSE-fonts "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE-fonts\n'
                              if fonts_license else ""),
-            rcc_copy=rcc_copy, restart=restart), encoding="utf-8", newline="\n")
+            rcc_copy=rcc_copy, rcc_osupgrade=rcc_osupgrade, rcc_remove=rcc_remove, restart=restart),
+            encoding="utf-8", newline="\n")
         kind_en = "keyboard and fonts" if c.get("input", "none") != "none" and has_fonts else (
             "keyboard" if c.get("input", "none") != "none" else "fonts")
         blocks.append("\n".join([

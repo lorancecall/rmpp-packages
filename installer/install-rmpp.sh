@@ -11,6 +11,8 @@
 #   --yes             no menu: install the default selection (or the --packages list)
 #   --catalog DIR     use the rmpp-mod.conf files in DIR (*.conf, in name order) instead of the online catalog
 #   --list            print the mods (and add-ons) of the catalog and exit
+#   --uninstall       remove every rmpp add-on and every rmpp system file (the system is stock again);
+#                     with --purge also their settings and data in /home, with --vellum also Vellum itself
 #
 # Before you start, turn on developer mode on the tablet. The root password is shown in
 # Settings > General > Help > About > Copyrights and licenses.
@@ -21,7 +23,7 @@ VELLUM_README=https://raw.githubusercontent.com/vellum-dev/vellum-cli/main/READM
 BOOTSTRAP_URL=https://github.com/vellum-dev/vellum-cli/releases/latest/download/bootstrap.sh
 KEY="$HOME/.ssh/id_ed25519_rmpp"
 
-HOST="" LANG_UI="" PICK="" YES="" CATALOG_DIR="" LIST=""
+HOST="" LANG_UI="" PICK="" YES="" CATALOG_DIR="" LIST="" UNINSTALL="" RMARGS=""
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--lang) LANG_UI=$2; shift ;;
@@ -31,6 +33,9 @@ while [ $# -gt 0 ]; do
 		--catalog) CATALOG_DIR=$2; shift ;;
 		--yes|-y) YES=1 ;;
 		--list) LIST=1 ;;
+		--uninstall) UNINSTALL=1 ;;
+		--purge) RMARGS="$RMARGS --purge" ;;
+		--vellum) RMARGS="$RMARGS --vellum" ;;
 		-*) echo "unknown option $1" >&2; exit 2 ;;
 		*) HOST=$1 ;;
 	esac
@@ -287,6 +292,26 @@ if ! $SSH -o BatchMode=yes -o ConnectTimeout=8 "$TARGET" true 2>/dev/null; then
 fi
 say "$(m loggedin) $HOST"
 
+# --uninstall: remove-rmpp.sh runs on the tablet (next to this script, or from the package site).
+if [ -n "$UNINSTALL" ]; then
+	RM="$(dirname "$0")/remove-rmpp.sh"
+	if [ ! -f "$RM" ]; then
+		RM="$CAT/remove-rmpp.sh"
+		curl -fsSL "$REPO/remove-rmpp.sh" -o "$RM" || die "remove-rmpp.sh: $(m catalog_fail)"
+	fi
+	if [ -z "$YES" ] && [ -t 0 ]; then
+		if [ "$LANG_UI" = ko ]; then
+			printf '\n모든 rmpp 애드온과 시스템 파일을 지웁니다%s. 계속할까요? [y/N] ' "$(case "$RMARGS" in *--purge*) echo " (설정·데이터 포함)" ;; esac)"
+		else
+			printf '\nRemove every rmpp add-on and system file%s? [y/N] ' "$(case "$RMARGS" in *--purge*) echo " (with settings and data)" ;; esac)"
+		fi
+		read -r ans
+		case "$ans" in y|Y|yes) ;; *) exit 0 ;; esac
+	fi
+	tr -d '\r' < "$RM" | $SSH "$TARGET" "sh -s --$RMARGS"
+	exit $?
+fi
+
 # 2. What is installed, then choose (menu on a terminal; --packages / --yes or no terminal: no menu).
 VLIST=$($SSH "$TARGET" "/home/root/.vellum/bin/vellum list 2>/dev/null | grep -F '[installed]' | cut -d' ' -f1" 2>/dev/null |
 	sed 's/-[0-9][^-]*-r[0-9]*$//' | tr '\n' ' ' || true)
@@ -359,7 +384,7 @@ done
 [ -n "$PACKAGES$RELEASES" ] || say "$(m nothing)"
 
 # 6. After a reMarkable OS update the files in the root file system are gone: restore them.
-if [ -n "$VLIST$PACKAGES" ] && $SSH "$TARGET" '[ ! -x /usr/lib/rmpp-preload/launch ] && [ -x /home/root/.vellum/bin/vellum ]'; then
+if [ -n "$VLIST$PACKAGES" ] && $SSH "$TARGET" '[ -x /home/root/.vellum/bin/vellum ] && [ ! -e /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf ]'; then
 	say "$(m reenable)"
 	$SSH "$TARGET" '/home/root/.vellum/bin/vellum reenable' || die "$(m reenable_fail)"
 fi

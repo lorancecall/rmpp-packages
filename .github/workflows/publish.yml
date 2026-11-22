@@ -56,7 +56,7 @@ jobs:
               for f in *.apk; do apk verify \$f; done
               chown $(id -u):$(id -g) APKINDEX.tar.gz"
           cp keys/lorancecall-rmpp.rsa.pub site/
-          cp install.sh installer/install-rmpp.sh installer/install-rmpp.ps1 mods.txt site/
+          cp install.sh installer/install-rmpp.sh installer/install-rmpp.ps1 installer/remove-rmpp.sh mods.txt site/
           mkdir -p site/addons && cp site-addons/*.txt site/addons/
           ls -la site site/aarch64
 

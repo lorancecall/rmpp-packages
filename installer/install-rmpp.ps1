@@ -12,12 +12,14 @@
 #   -Yes       no menu: install the default selection (or the -Packages list)
 #   -Catalog   folder with rmpp-mod.conf files (*.conf, in name order) instead of the online catalog
 #   -List      print the mods (and add-ons) of the catalog and exit
+#   -Uninstall remove every rmpp add-on and every rmpp system file (the system is stock again);
+#              with -Purge also their settings and data in /home, with -Vellum also Vellum itself
 #
 # Before you start, turn on developer mode on the tablet. The root password is shown in
 # Settings > General > Help > About > Copyrights and licenses.
 # (Saved as UTF-8 with BOM so that Windows PowerShell 5.1 reads the Korean text correctly.)
 param([string]$TabletHost = "", [string]$Lang = "", [string[]]$Packages = @(), [switch]$Yes, [string]$Catalog = "",
-      [switch]$List)
+      [switch]$List, [switch]$Uninstall, [switch]$Purge, [switch]$Vellum)
 
 $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
@@ -248,6 +250,28 @@ if (-not (Remote "true" -Batch -Quiet)) {
 }
 Say "$(M 'loggedin') $TabletHost"
 
+# -Uninstall: remove-rmpp.sh runs on the tablet (next to this script, or from the package site).
+if ($Uninstall) {
+    $rm = Join-Path $PSScriptRoot "remove-rmpp.sh"
+    if (-not (Test-Path $rm)) {
+        $rm = Join-Path $tmp "remove-rmpp.sh"
+        try { Invoke-WebRequest -UseBasicParsing "$Repo/remove-rmpp.sh" -OutFile $rm } catch { Die "remove-rmpp.sh: $(M 'catalog_fail')" }
+    }
+    $lf = Join-Path $tmp "remove-rmpp.lf.sh"
+    [System.IO.File]::WriteAllText($lf, ([System.IO.File]::ReadAllText($rm) -replace "`r`n", "`n"), $Utf8)
+    $rmArgs = ""
+    if ($Purge) { $rmArgs += " --purge" }
+    if ($Vellum) { $rmArgs += " --vellum" }
+    if (-not $Yes -and -not [Console]::IsInputRedirected) {
+        if ($Lang -eq "ko") { $q = "모든 rmpp 애드온과 시스템 파일을 지웁니다" + $(if ($Purge) { " (설정·데이터 포함)" } else { "" }) + ". 계속할까요? [y/N]" }
+        else { $q = "Remove every rmpp add-on and system file" + $(if ($Purge) { " (with settings and data)" } else { "" }) + "? [y/N]" }
+        $ans = Read-Host $q
+        if ($ans -notmatch '^(y|yes)$') { exit 0 }
+    }
+    if (-not (SendFile $lf "sh -s --$rmArgs")) { Die "remove-rmpp.sh failed" }
+    exit 0
+}
+
 # 2. What is installed, then choose (menu in a console; -Packages / -Yes or redirected input: no menu).
 $prev = $ErrorActionPreference; $ErrorActionPreference = "Continue"
 $vraw = & ssh @SshOpts $Target "/home/root/.vellum/bin/vellum list 2>/dev/null | grep -F '[installed]' | cut -d' ' -f1" 2>$null
@@ -319,7 +343,7 @@ foreach ($m in $Releases) {
 if ($Vellum.Count -eq 0 -and $Releases.Count -eq 0) { Say (M 'nothing') }
 
 # 6. After a reMarkable OS update the files in the root file system are gone: restore them.
-if (($VList.Count + $Vellum.Count) -gt 0 -and (Remote "[ ! -x /usr/lib/rmpp-preload/launch ] && [ -x /home/root/.vellum/bin/vellum ]" -Quiet)) {
+if (($VList.Count + $Vellum.Count) -gt 0 -and (Remote "[ -x /home/root/.vellum/bin/vellum ] && [ ! -e /usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf ]" -Quiet)) {
     Say (M 'reenable')
     if (-not (Remote "/home/root/.vellum/bin/vellum reenable")) { Die (M 'reenable_fail') }
 }
