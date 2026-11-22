@@ -27,6 +27,10 @@ Status: all done on this branch (not yet tested on a tablet). rmpp-bt and rmpp-t
 (lorancecall/rmpp-lang#12: layouts next to `RMPPLANG_RCC`); rmpp-hwr needs its next release
 (lorancecall/rmpp-hwr#8).
 
+Restarts: package scripts (and the rmpp-hwr installer) re-arm one transient timer, `rmpp-restart-xochitl` (15 s),
+instead of restarting xochitl themselves, so a transaction restarts xochitl once after its last script. Only the
+one-time removal of old `/usr/lib` files restarts at once (to remount `/` read-only) and cancels the timer.
+
 | Add-on | Root file system now | Change |
 |---|---|---|
 | rmpp-preload | launcher, drop-in, `rmpp-preload.d` | **done on this branch**: launcher in `/home`, fail-safe drop-in |
