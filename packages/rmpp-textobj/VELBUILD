@@ -85,7 +85,7 @@ predeinstall() {
 		{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 }
 sha512sums="
-aeb1f0d8d51275f4db3f8ee3a4e29674ba0b5f9f02ac577e0181c6a487329624d4dcf229734a48ff8823bb97937fef465a49065fab87e3bb822566de2620ee86  librmpp-textobj-ui.so
+ffdb2df5a0cba4bf21585ea6e03767cc914aeb2f54581d5dc976a406f56416629fb97f056f1bb14ffd4e090d7634a3cb0264c74446418700198f842d0f911ddd  librmpp-textobj-ui.so
 83cc1f64382c27fd4afef829db8856e37aa7f24457c13ad6628faad918df955eeb53a1a70ebeeba4d4d644ba3c4a9094c3e09153d92f11e3937bd2393ea12b29  glyphs.json
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
 "
