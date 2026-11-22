@@ -33,8 +33,9 @@ transient unit), otherwise it is stopped with xochitl.
 
 ## To check on the new tablet first
 
-1. **Is `/home` mounted when xochitl starts?** (`/home` is an encrypted volume.) If not, the drop-in falls back
-   to plain xochitl and nothing loads; then the drop-in needs `After=`/`RequiresMountsFor=/home`.
+1. **Is `/home` mounted when xochitl starts?** Checked on OS 3.29.1.0: **no**. xochitl started at 4.2 s, the
+   encrypted `/home` was mounted at 8.5 s (xochitl's unit has no ordering on it). The drop-in now has
+   `After=home.mount` (ordering only, no `Requires=`, so a failed mount still starts plain xochitl).
 2. The drop-in's `sh -c` with `$$l` (systemd's escape for `$`) starts xochitl normally, with and without the
    launcher.
 3. Boot hooks: Bluetooth comes up and keyboards reconnect; Tailscale starts when enabled; both survive a xochitl
