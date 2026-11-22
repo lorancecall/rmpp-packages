@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # an add-on repository announces a release (gh workflow run, or repository_dispatch "rmpp-release"); the daily run
+  # picks up new add-ons and new versions in any case (scripts/registry.py)
+  repository_dispatch:
+    types: [rmpp-release]
+  schedule:
+    - cron: "37 4 * * *"
 
 permissions:
   contents: read
@@ -34,6 +40,11 @@ jobs:
         run: |
           printf '%s\n' "$SIGNING_KEY" > keys/lorancecall-rmpp.rsa
           chmod 600 keys/lorancecall-rmpp.rsa
+
+      - name: Add-ons from their repositories (topic rmpp)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/registry.py
 
       - name: rmpp-lang language add-on packages
         run: |
