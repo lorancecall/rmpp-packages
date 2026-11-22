@@ -1,6 +1,6 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang
-pkgver=0.3.1
+pkgver=0.3.2
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"
@@ -20,13 +20,21 @@ options="!check !fhs !strip"
 
 # Each lifecycle function runs as its own script: no shared helpers, every step is written out.
 # Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
-# Language add-ons are separate packages rmpp-lang-<code> (scripts/lang-addons.py); they put <code>.rcc into
-# /usr/lib/rmpp-lang/languages/, which this package creates.
+# Everything lives in /home (rmpp-preload's one-file layout): library, rcc and the rmpp-lang command in the share
+# folder, a link in preload.d and the rcc path in env.d. Language add-ons (rmpp-lang-<code>, scripts/lang-addons.py)
+# put their layouts in languages/ next to rmpp-lang.rcc. A factory reset removes it all. Older versions put files
+# in /usr/lib/rmpp-lang and /usr/bin/rmpp-lang: removed here (with the add-ons' layouts there).
 
 package() {
-	install -Dm755 "$srcdir"/librmpp-lang.so "$pkgdir"/home/root/.vellum/share/rmpp-lang/librmpp-lang.so
-	install -Dm644 "$srcdir"/rmpp-lang.rcc "$pkgdir"/home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc
-	install -Dm755 "$srcdir"/rmpp-lang "$pkgdir"/home/root/.vellum/share/rmpp-lang/rmpp-lang
+	local d="$pkgdir"/home/root/.vellum/share/rmpp-lang
+	local p="$pkgdir"/home/root/.vellum/share/rmpp-preload
+	install -Dm755 "$srcdir"/librmpp-lang.so "$d"/librmpp-lang.so
+	install -Dm644 "$srcdir"/rmpp-lang.rcc "$d"/rmpp-lang.rcc
+	install -Dm755 "$srcdir"/rmpp-lang "$d"/rmpp-lang
+	install -dm755 "$d"/languages "$p"/preload.d "$p"/env.d "$pkgdir"/home/root/.vellum/bin
+	ln -s ../../rmpp-lang/librmpp-lang.so "$p"/preload.d/50-rmpp-lang.so
+	echo "export RMPPLANG_RCC=/home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc" > "$p"/env.d/rmpp-lang.env
+	ln -s ../share/rmpp-lang/rmpp-lang "$pkgdir"/home/root/.vellum/bin/rmpp-lang
 
 	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
 	echo "https://github.com/$upstream_author/rmpp-lang" > \
@@ -34,61 +42,41 @@ package() {
 }
 
 postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	mkdir -p /usr/lib/rmpp-lang/languages
-	cp /home/root/.vellum/share/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-lang/librmpp-lang.so.new && chmod 755 /usr/lib/rmpp-lang/librmpp-lang.so.new && mv -f /usr/lib/rmpp-lang/librmpp-lang.so.new /usr/lib/rmpp-lang/librmpp-lang.so
-	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc /usr/lib/rmpp-lang/rmpp-lang.rcc.new && chmod 644 /usr/lib/rmpp-lang/rmpp-lang.rcc.new && mv -f /usr/lib/rmpp-lang/rmpp-lang.rcc.new /usr/lib/rmpp-lang/rmpp-lang.rcc
-	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
-	mkdir -p /usr/lib/rmpp-preload.d
-	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
-	sync
-	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
+	if [ -e /usr/lib/rmpp-lang ] || [ -e /usr/bin/rmpp-lang ] || [ -L /usr/lib/rmpp-preload.d/50-rmpp-lang.so ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so /usr/bin/rmpp-lang
+		rm -rf /usr/lib/rmpp-lang
+		sync
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 postupgrade() {
-	/home/root/.vellum/bin/mount-rw
-	mkdir -p /usr/lib/rmpp-lang/languages
-	cp /home/root/.vellum/share/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-lang/librmpp-lang.so.new && chmod 755 /usr/lib/rmpp-lang/librmpp-lang.so.new && mv -f /usr/lib/rmpp-lang/librmpp-lang.so.new /usr/lib/rmpp-lang/librmpp-lang.so
-	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc /usr/lib/rmpp-lang/rmpp-lang.rcc.new && chmod 644 /usr/lib/rmpp-lang/rmpp-lang.rcc.new && mv -f /usr/lib/rmpp-lang/rmpp-lang.rcc.new /usr/lib/rmpp-lang/rmpp-lang.rcc
-	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
-	mkdir -p /usr/lib/rmpp-preload.d
-	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
-	sync
-	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
-}
-
-# `vellum reenable` after an OS update: the root file system is already writable here. The add-on packages
-# copy their own .rcc files back in their postosupgrade.
-postosupgrade() {
-	mkdir -p /usr/lib/rmpp-lang/languages
-	cp /home/root/.vellum/share/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-lang/librmpp-lang.so.new && chmod 755 /usr/lib/rmpp-lang/librmpp-lang.so.new && mv -f /usr/lib/rmpp-lang/librmpp-lang.so.new /usr/lib/rmpp-lang/librmpp-lang.so
-	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang.rcc /usr/lib/rmpp-lang/rmpp-lang.rcc.new && chmod 644 /usr/lib/rmpp-lang/rmpp-lang.rcc.new && mv -f /usr/lib/rmpp-lang/rmpp-lang.rcc.new /usr/lib/rmpp-lang/rmpp-lang.rcc
-	cp /home/root/.vellum/share/rmpp-lang/rmpp-lang /usr/bin/rmpp-lang.new && chmod 755 /usr/bin/rmpp-lang.new && mv -f /usr/bin/rmpp-lang.new /usr/bin/rmpp-lang
-	mkdir -p /usr/lib/rmpp-preload.d
-	ln -sf /usr/lib/rmpp-lang/librmpp-lang.so /usr/lib/rmpp-preload.d/50-rmpp-lang.so
-	sync
+	if [ -e /usr/lib/rmpp-lang ] || [ -e /usr/bin/rmpp-lang ] || [ -L /usr/lib/rmpp-preload.d/50-rmpp-lang.so ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so /usr/bin/rmpp-lang
+		rm -rf /usr/lib/rmpp-lang
+		sync
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 # Settings (/home/root/.config/rmpp-lang) and the user's fonts stay, so a reinstall finds them again.
-predeinstall() {
-	/home/root/.vellum/bin/mount-rw
-	rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so
-	rm -rf /usr/lib/rmpp-lang
-	rm -f /usr/bin/rmpp-lang
-	sync
-	systemctl daemon-reload
+postdeinstall() {
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
 }
 sha512sums="
 2583f55d48e58b1bb8b523ab3b12d16b691e9ba0d23dd7ef955b369355dab843da22777c957e3d603e7cce43a3fee924006005fed552c1dbd4a87df60770d4c7  librmpp-lang.so
