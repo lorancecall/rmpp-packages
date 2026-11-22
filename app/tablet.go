@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -111,7 +112,21 @@ func dial(addr, known string, auth ssh.AuthMethod) (*ssh.Client, error) {
 		User: "root", Auth: []ssh.AuthMethod{auth},
 		HostKeyCallback: hostKeyCallback(known), Timeout: 8 * time.Second,
 	}
-	return ssh.Dial("tcp", addr, cfg)
+	c, err := ssh.Dial("tcp", addr, cfg)
+	if err == nil {
+		go keepAlive(c)
+	}
+	return c, err
+}
+
+// keepAlive pings the tablet while the app holds the connection: without traffic, the tablet's Wi-Fi drops an idle
+// connection after a minute or two, and the next button then fails with a read timeout.
+func keepAlive(c *ssh.Client) {
+	for range time.Tick(20 * time.Second) {
+		if _, _, err := c.SendRequest("keepalive@openssh.com", true, nil); err != nil {
+			return
+		}
+	}
 }
 
 // loadKey reads a private key file the user picked (it must exist; passphrase-protected keys are not supported).
@@ -211,7 +226,10 @@ func (t *Tablet) run(cmd string, stdin io.Reader, log func(string)) (string, err
 	if log != nil {
 		w = io.MultiWriter(&buf, &lineWriter{log: log})
 	}
-	s.Stdout, s.Stderr = w, w
+	// the SSH session copies stdout and stderr in two goroutines: one lock, or the buffers race (a vellum removal
+	// that writes to both crashed the app with "slice bounds out of range" in lineWriter)
+	lw := &lockedWriter{w: w}
+	s.Stdout, s.Stderr = lw, lw
 	err = s.Run(cmd)
 	return buf.String(), err
 }
@@ -220,6 +238,17 @@ func (t *Tablet) run(cmd string, stdin io.Reader, log func(string)) (string, err
 func (t *Tablet) ok(cmd string) bool {
 	_, err := t.run(cmd, nil, nil)
 	return err == nil
+}
+
+type lockedWriter struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func (l *lockedWriter) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.w.Write(p)
 }
 
 type lineWriter struct {
