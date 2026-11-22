@@ -1,10 +1,13 @@
 # rmpp-packages
 
 Add-ons for the reMarkable Paper Pro (OS 3.29), packaged so they install in one go. Code I tuned for my own
-tablet; a [Vellum](https://github.com/vellum-dev/vellum) package repository only because that was the easiest way
+Paper Pro; a [Vellum](https://github.com/vellum-dev/vellum) package repository only because that was the easiest way
 to gather it in one place. Overview: **[lorancecall.github.io/rmpp](https://lorancecall.github.io/rmpp/)**.
 
-- **Not an official repository**, tested on my own tablet only, no support promised.
+- **Paper Pro, OS 3.29 only.** Made for and tested on the reMarkable Paper Pro with OS 3.29. Other reMarkable
+  models are not supported and their compatibility is not guaranteed (the packages refuse to install on the
+  reMarkable 1 and 2). Following newer OS versions is something I do when I have time, and may not happen.
+- **Not an official repository**, no support promised. Issues are welcome; fixes come when I have time.
 - **Take what is useful**: feel free to move a package to Vellum's main repository or anywhere else (keep the
   license, GPL-3.0). No need to ask.
 
@@ -16,8 +19,8 @@ to gather it in one place. Overview: **[lorancecall.github.io/rmpp](https://lora
 | [rmpp-bt](https://github.com/lorancecall/rmpp-bt) | Bluetooth page in Settings, quick-settings toggle, keyboards, Bluetooth on at boot |
 | [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale) | Tailscale with a Settings page (QR login, devices, updates) and SSH over Tailscale (~70 MB in /home) |
 | [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh button in the toolbar and the library sidebar: one tap clears ghosting |
-| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | Handwriting recognition on the tablet: lasso to typed text or movable ink text, Convert page (Korean, Chinese, Japanese, English, Latin; ~80 MB) |
-| [rmpp-studio](https://github.com/lorancecall/rmpp-studio) | Desktop app to see and control the tablet from a computer; its tablet part is `rmpp-remote` |
+| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | Handwriting recognition on the Paper Pro: lasso to typed text or movable ink text, Convert page (Korean, Chinese, Japanese, English, Latin; ~80 MB) |
+| [rmpp-studio](https://github.com/lorancecall/rmpp-studio) | Desktop app to see and control the Paper Pro from a computer; its Paper Pro part is `rmpp-remote` |
 | `rmpp-preload` | Loads the add-ons into xochitl at boot, keeps xovi working (installed automatically) |
 
 None of them needs xovi, and they stay on after a reboot ([how](docs/how-it-works.md)). Handwriting data:
@@ -25,10 +28,10 @@ None of them needs xovi, and they stay on after a reboot ([how](docs/how-it-work
 
 ## Install
 
-1. **Developer mode and the SSH password.** Turning developer mode on **erases the tablet** (sync first):
+1. **Developer mode and the SSH password.** Turning developer mode on **erases the Paper Pro** (sync first):
    Settings > General > Paper Tablet > Software > Advanced > Developer Mode. The password is then in Settings >
    General > Help > About > Copyrights and Licenses. Details and connection problems: [docs/ssh.md](docs/ssh.md).
-2. **Run rmpp setup** with the tablet on USB (`10.11.99.1`) or the same Wi-Fi, pick the add-ons, install. Two ways,
+2. **Run rmpp setup** with the Paper Pro on USB (`10.11.99.1`) or the same Wi-Fi, pick the add-ons, install. Two ways,
    same result: pick the one you like.
 
    <img src="docs/rmpp-setup.png" alt="rmpp setup: connect, choose mods, install" width="560">
@@ -64,10 +67,10 @@ Every add-on installs what it needs with it (`rmpp-preload` always): [docs/packa
 ## Remove
 
 - **One add-on:** in the app, untick it and press **Remove unticked installed**; on the command line,
-  `vellum del <package>` on the tablet.
-- **Everything:** **Remove everything** in the app, or `sh install-rmpp.sh <tablet> --uninstall`; optionally with
+  `vellum del <package>` on the Paper Pro.
+- **Everything:** **Remove everything** in the app, or `sh install-rmpp.sh <address> --uninstall`; optionally with
   the add-ons' settings and data.
-- **Before a factory reset or handing the tablet on**, remove everything first: a reset does not remove the
+- **Before a factory reset or handing the Paper Pro on**, remove everything first: a reset does not remove the
   add-ons' system files.
 
 Step by step, what stays and the command-line versions: [docs/uninstall.md](docs/uninstall.md).
