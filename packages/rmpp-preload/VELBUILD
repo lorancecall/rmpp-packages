@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-preload
 pkgver=0.2.0
-pkgrel=1
+pkgrel=2
 upstream_author="lorancecall"
 category="framework"
 pkgdesc="Loads rmpp add-ons into xochitl at boot; all rmpp files in /usr/lib/rmpp, next to xovi"
@@ -99,6 +99,6 @@ predeinstall() {
 }
 sha512sums="
 64db45d6d83f586ba07bf2acb0a3196b86ee5669b6063fb545d03602a5392aa4dbe11ea3bb4a2cbf44cca8875a75186277242172c2934c6a4d2ed53787c9f35b  launch
-df0b6a18f1f45073fdebea5b83c45195f6158915122ebc9bc3652f6b6a61f1fa5a5512643c1754a491ec17cddcbe452b451782ead29c35e3a3d23d453bdb02da  restart
+ab133f872abe1a69be996a3afd7c0d37e8f94e060071c493ac63c662ffc85f817d3aea3f824e1cb5ca0d03462f27da3261642e3fda73854ef1d63dfe54782906  restart
 b1bbc6059601f970408ac4a0d1ae1535f657e9b3aca2a3ebb2964a281a7c06566a8af62094dd71635a46c87759d0573b3118c0d71e0d427874e56cef07ff2b06  rmpp-preload.conf
 "
