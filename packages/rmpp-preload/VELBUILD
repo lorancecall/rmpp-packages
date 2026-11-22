@@ -49,10 +49,12 @@ postupgrade() {
 	rmdir /usr/lib/rmpp-preload.d 2>/dev/null || true
 	sync
 	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
 	/home/root/.vellum/bin/mount-restore
+	# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+	systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+	systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+		/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+		{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 }
 
 # `vellum reenable` after an OS update: the root file system is already writable here.

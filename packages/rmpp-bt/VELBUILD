@@ -55,6 +55,7 @@ postinstall() {
 		sync
 		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
 		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
 		systemctl reset-failed xochitl 2>/dev/null || true
 		systemctl restart xochitl
 		sleep 3
@@ -62,8 +63,11 @@ postinstall() {
 	else
 		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
 		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	fi
 }
 
@@ -76,6 +80,7 @@ postupgrade() {
 		sync
 		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
 		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
 		systemctl reset-failed xochitl 2>/dev/null || true
 		systemctl restart xochitl
 		sleep 3
@@ -83,8 +88,11 @@ postupgrade() {
 	else
 		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
 		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	fi
 }
 
@@ -95,8 +103,11 @@ predeinstall() {
 }
 
 postdeinstall() {
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
+	# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+	systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+	systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+		/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+		{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	if [ "$VELLUM_PURGE" = "1" ]; then
 		rm -rf /home/root/.config/rmpp-bt
 	fi

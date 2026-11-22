@@ -47,13 +47,17 @@ postinstall() {
 		rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so /usr/bin/rmpp-lang
 		rm -rf /usr/lib/rmpp-lang
 		sync
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
 		systemctl reset-failed xochitl 2>/dev/null || true
 		systemctl restart xochitl
 		sleep 3
 		/home/root/.vellum/bin/mount-restore
 	else
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	fi
 }
 
@@ -63,20 +67,27 @@ postupgrade() {
 		rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so /usr/bin/rmpp-lang
 		rm -rf /usr/lib/rmpp-lang
 		sync
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
 		systemctl reset-failed xochitl 2>/dev/null || true
 		systemctl restart xochitl
 		sleep 3
 		/home/root/.vellum/bin/mount-restore
 	else
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	fi
 }
 
 # Settings (/home/root/.config/rmpp-lang) and the user's fonts stay, so a reinstall finds them again.
 postdeinstall() {
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
+	# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+	systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+	systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+		/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+		{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 }
 sha512sums="
 2583f55d48e58b1bb8b523ab3b12d16b691e9ba0d23dd7ef955b369355dab843da22777c957e3d603e7cce43a3fee924006005fed552c1dbd4a87df60770d4c7  librmpp-lang.so

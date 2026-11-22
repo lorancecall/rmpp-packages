@@ -168,7 +168,11 @@ def main():
         has_fonts = (built / "fonts").is_dir()
         sums = "\n".join(f"{hashlib.sha512((out / f).read_bytes()).hexdigest()}  {f}" for f in files)
         # layouts are registered when xochitl starts: restart only for add-ons that have them
-        restart = ("\tsystemctl reset-failed xochitl 2>/dev/null || true\n\tsystemctl restart xochitl\n"
+        restart = ("\t# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins\n"
+                   "\tsystemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true\n"
+                   "\tsystemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \\\n"
+                   "\t\t/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \\\n"
+                   "\t\t{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }\n"
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
             repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), # layouts in /home need rmpp-lang 0.3.2 or later, whatever older core the add-on would run on

@@ -34,13 +34,17 @@ postinstall() {
 		rm -f /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
 		rm -rf /usr/lib/rmpp-refresh
 		sync
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
 		systemctl reset-failed xochitl 2>/dev/null || true
 		systemctl restart xochitl
 		sleep 3
 		/home/root/.vellum/bin/mount-restore
 	else
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	fi
 }
 
@@ -50,20 +54,27 @@ postupgrade() {
 		rm -f /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
 		rm -rf /usr/lib/rmpp-refresh
 		sync
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
 		systemctl reset-failed xochitl 2>/dev/null || true
 		systemctl restart xochitl
 		sleep 3
 		/home/root/.vellum/bin/mount-restore
 	else
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 	fi
 }
 
 # The files are gone now; restart so xochitl runs without the library.
 postdeinstall() {
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
+	# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+	systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+	systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+		/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+		{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 }
 sha512sums="
 a568808ebe7676fe4c253166c8e907818ab6bdde88a4b4a901de9ebf4d8c66014438aa6c0feb396d7f205dbbeee5190fcfac026a41ec7a362c102707f020a9f5  librmpp-refresh.so
