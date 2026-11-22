@@ -6,8 +6,8 @@ the private key of this repository is not public.
 ## Why the key name matters
 
 Every package and the repository index (`APKINDEX.tar.gz`) are signed with one RSA key. The signature records the
-key's file name, and apk on the tablet looks for a public key with exactly that name in
-`/home/root/.vellum/etc/apk/keys/`. So the name is part of every published package: if it changes, every tablet
+key's file name, and apk on the Paper Pro looks for a public key with exactly that name in
+`/home/root/.vellum/etc/apk/keys/`. So the name is part of every published package: if it changes, every Paper Pro
 has to get the new public key (the installer and `install.sh` download it by name).
 
 ## Make a key
@@ -39,9 +39,9 @@ git grep -l 'maintainer=' packages
 
 ## Changing the key later
 
-The next push to `main` re-signs every package and the index. Tablets that only have the old public key then fail
-`vellum update` with an untrusted-signature error until they get the new one: run the installer again, or on the
-tablet `wget -qO- https://<owner>.github.io/rmpp-packages/install.sh | sh`. Installed packages keep working in the
+The next push to `main` re-signs every package and the index. A Paper Pro that only have the old public key then fails
+`vellum update` with an untrusted-signature error until it gets the new one: run the installer again, or on the
+Paper Pro `wget -qO- https://<owner>.github.io/rmpp-packages/install.sh | sh`. Installed packages keep working in the
 meantime. If the name changed, the old `.pub` can be deleted from `/home/root/.vellum/etc/apk/keys/`.
 
 ## Adding mods to the installer menu

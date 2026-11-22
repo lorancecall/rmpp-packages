@@ -20,7 +20,7 @@ remove: [manual-install.md](manual-install.md), [uninstall.md](uninstall.md).
 | `rmpp-refresh` | Refresh screen button in the notebook toolbar: a full e-paper refresh that clears ghosting | `rmpp-preload` | - | Screen refresh button |
 | `rmpp-tailscale` | Tailscale (userspace networking) with a Settings page: on/off, QR-code login, status and devices | `rmpp-preload` | - | Tailscale VPN and remote SSH |
 
-"Installs with it" counts everything pulled in, also indirectly. All packages also check the tablet (reMarkable
+"Installs with it" counts everything pulled in, also indirectly. All packages also check the device (reMarkable
 Paper Pro, OS 3.29) and refuse to install elsewhere.
 
 ## Mods that are not Vellum packages (yet)

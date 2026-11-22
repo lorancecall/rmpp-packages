@@ -5,7 +5,7 @@ Pick the step that matches what you want. rmpp setup (the desktop app) and the c
 ## 1. One add-on
 
 - **rmpp setup:** connect, untick the add-on, press **Remove unticked installed**.
-- **Command line** (on the tablet): `vellum del <package>`, for example `vellum del rmpp-refresh`. Package names:
+- **Command line** (on the Paper Pro): `vellum del <package>`, for example `vellum del rmpp-refresh`. Package names:
   [packages.md](packages.md).
 
 xochitl restarts once. A package that another installed package still needs stays installed (apk says which one
@@ -19,11 +19,11 @@ step 2, or their project's `docs/install.md`.
 ## 2. Everything
 
 Removes every rmpp add-on, every rmpp file on the system (`/usr/lib/rmpp` and xochitl's drop-in) and the rmpp
-package repository. The tablet's system is stock again. Packages from other Vellum repositories stay, and so do
+package repository. The Paper Pro's system is stock again. Packages from other Vellum repositories stay, and so do
 `rmpp-preload` and Vellum while those need them.
 
 - **rmpp setup:** **Remove everything**. It shows what it will remove before it starts.
-- **Command line** (on your computer): `sh install-rmpp.sh <tablet> --uninstall` (Windows:
+- **Command line** (on your computer): `sh install-rmpp.sh <address> --uninstall` (Windows:
   `powershell -ExecutionPolicy Bypass -File install-rmpp.ps1 -Uninstall`).
 
 ## 3. Everything, with settings and data
@@ -34,7 +34,7 @@ you added). rmpp setup: tick **Also delete their settings and data** before **Re
 
 Your notebooks are never touched.
 
-## Before a factory reset, or handing the tablet on
+## Before a factory reset, or handing the Paper Pro on
 
 A factory reset wipes `/home` (your files, Vellum and its removal scripts) but **not** the system files where the
 add-ons live, so they keep loading. Developer mode also stays on.
@@ -42,4 +42,4 @@ add-ons live, so they keep loading. Developer mode also stays on.
 1. Before the reset: step 2 or 3.
 2. Already reset: connect with rmpp setup and use **Clean up leftover system files**, or run the same `--uninstall`
    (it removes `/usr/lib/rmpp` and the drop-in even without Vellum).
-3. Handing the tablet on: reMarkable's recovery application returns it to the factory state, developer mode off.
+3. Handing the Paper Pro on: reMarkable's recovery application returns it to the factory state, developer mode off.
