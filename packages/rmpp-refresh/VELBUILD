@@ -8,7 +8,7 @@ pkgdesc="Refresh screen button in the notebook toolbar: a full e-paper refresh t
 url="https://github.com/lorancecall/rmpp-refresh"
 arch="aarch64"
 license="GPL-3.0-only"
-depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
+depends="rmpp-preload>=0.2.0 !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30"
 source="
 https://github.com/$upstream_author/rmpp-refresh/releases/download/v$pkgver/librmpp-refresh.so
 https://raw.githubusercontent.com/$upstream_author/rmpp-refresh/v$pkgver/LICENSE

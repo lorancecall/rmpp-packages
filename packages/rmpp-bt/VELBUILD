@@ -8,7 +8,7 @@ pkgdesc="Bluetooth settings page and quick-settings toggle; Bluetooth on at boot
 url="https://github.com/lorancecall/rmpp-bt"
 arch="aarch64"
 license="GPL-3.0-only"
-depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30 !bluetooth-settings !quicksettings-bluetooth"
+depends="rmpp-preload>=0.2.0 !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30 !bluetooth-settings !quicksettings-bluetooth"
 source="
 https://github.com/$upstream_author/rmpp-bt/releases/download/v$pkgver/librmpp-bt.so
 https://github.com/$upstream_author/rmpp-bt/releases/download/v$pkgver/rmpp-bt.rcc

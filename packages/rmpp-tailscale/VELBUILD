@@ -9,7 +9,7 @@ pkgdesc="Tailscale (userspace networking) with a Settings page: on/off, QR-code 
 url="https://github.com/lorancecall/rmpp-tailscale"
 arch="aarch64"
 license="GPL-3.0-only AND BSD-3-Clause AND MIT"
-depends="rmpp-preload !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30 !tailscale"
+depends="rmpp-preload>=0.2.0 !rm1 !rm2 mount-utils remarkable-os>=3.29 remarkable-os<3.30 !tailscale"
 source="
 https://github.com/$upstream_author/rmpp-tailscale/releases/download/v$pkgver/librmpp-tailscale.so
 https://github.com/$upstream_author/rmpp-tailscale/releases/download/v$pkgver/rmpp-tailscale.rcc

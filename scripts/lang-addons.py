@@ -23,6 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RESERVED = {"en", "latin"}                # part of the rmpp-lang core; every other language is an add-on
+LAYOUTS_IN_HOME = "0.3.2"                 # first rmpp-lang that reads add-on layouts from /home (rmpp-lang#12)
 
 
 def conf(path):
@@ -170,7 +171,8 @@ def main():
         restart = ("\tsystemctl reset-failed xochitl 2>/dev/null || true\n\tsystemctl restart xochitl\n"
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
-            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), min_core=c.get("min_core", "0.1.0"),
+            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), # layouts in /home need rmpp-lang 0.3.2 or later, whatever older core the add-on would run on
+            min_core=max(c.get("min_core", "0.1.0"), LAYOUTS_IN_HOME, key=lambda v: tuple(int(x) for x in v.split("."))),
             requires="".join(f" {p}" for p in req_pkgs),
             desc=pkgdesc(c.get("summary_en", c.get("name", code))),
             # extra licenses of bundled data (dictionaries...), per add-on in lang-addons.conf: license.<code>=

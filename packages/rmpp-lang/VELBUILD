@@ -9,7 +9,7 @@ url="https://github.com/lorancecall/rmpp-lang"
 arch="aarch64"
 license="GPL-3.0-only"
 # !rmpp-korean: the old Korean add-on would compose Hangul a second time (remove it first: vellum del rmpp-korean)
-depends="rmpp-preload !rm1 !rm2 !rmpp-korean mount-utils remarkable-os>=3.29 remarkable-os<3.30"
+depends="rmpp-preload>=0.2.0 !rm1 !rm2 !rmpp-korean mount-utils remarkable-os>=3.29 remarkable-os<3.30"
 source="
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/librmpp-lang.so
 https://github.com/$upstream_author/rmpp-lang/releases/download/v$pkgver/rmpp-lang.rcc
