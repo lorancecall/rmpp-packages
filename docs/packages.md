@@ -9,7 +9,7 @@ remove: [manual-install.md](manual-install.md), [uninstall.md](uninstall.md).
 
 | Package | What it does | Installs with it | Needed by | rmpp setup menu |
 |---|---|---|---|---|
-| `rmpp-preload` | Loads rmpp add-ons into xochitl at boot; all rmpp files in /usr/lib/rmpp, next to xovi | - | `rmpp-bt`, `rmpp-lang`, `rmpp-refresh`, `rmpp-tailscale` | (always, with any add-on) |
+| `rmpp-preload` | Loads rmpp add-ons into xochitl at boot; all rmpp files in /usr/lib/rmpp, next to xovi | - | `rmpp-bt`, `rmpp-lang`, `rmpp-refresh`, `rmpp-remote`, `rmpp-tailscale` | (always, with any add-on) |
 | `rmpp-bt` | Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi) | `rmpp-preload` | - | Bluetooth settings and toggle |
 | `rmpp-lang` | Languages: keyboard switching and fonts per language (typed text too); languages are add-ons (rmpp-lang-ko, ...) | `rmpp-preload` | `rmpp-lang-bg`, `rmpp-lang-ja`, `rmpp-lang-ko`, `rmpp-lang-ru`, `rmpp-lang-zh` | Languages: keyboards and fonts per language |
 | `rmpp-lang-bg` | Bulgarian keyboards (BDS, phonetic) on screen and on Type Folio, Bluetooth and USB keyboards | `rmpp-lang`, `rmpp-preload` | - | a language under Languages |
@@ -18,6 +18,7 @@ remove: [manual-install.md](manual-install.md), [uninstall.md](uninstall.md).
 | `rmpp-lang-ru` | Russian keyboard (ЙЦУКЕН) on screen and on Type Folio, Bluetooth and USB keyboards | `rmpp-lang`, `rmpp-preload` | - | a language under Languages |
 | `rmpp-lang-zh` | Chinese fonts and typing: pinyin (zhongguo), Mandarin in Hangul (중궈) or Korean Hanja readings (중국) | `rmpp-lang`, `rmpp-lang-ko`, `rmpp-preload` | - | a language under Languages |
 | `rmpp-refresh` | Refresh screen button in the notebook toolbar: a full e-paper refresh that clears ghosting | `rmpp-preload` | - | Screen refresh button |
+| `rmpp-remote` | rmpp-studio's Paper Pro part: screen capture, recording, UI lookup, text, pen and touch input for rmpp-studio on a computer | `rmpp-preload` | - | Remote control for rmpp-studio |
 | `rmpp-tailscale` | Tailscale (userspace networking) with a Settings page: on/off, QR-code login, status and devices | `rmpp-preload` | - | Tailscale VPN and remote SSH |
 
 "Installs with it" counts everything pulled in, also indirectly. All packages also check the device (reMarkable
@@ -32,7 +33,6 @@ its install script. Vellum does not track them: nothing checks their dependencie
 | Mod | rmpp setup menu | Installed first | Project |
 |---|---|---|---|
 | rmpp-hwr | Handwriting recognition (beta) | `rmpp-preload` | [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) |
-| rmpp-remote | Remote control for rmpp-studio | `rmpp-preload` | [rmpp-studio](https://github.com/lorancecall/rmpp-studio) |
 
 ## Packages that cannot be installed together
 
