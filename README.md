@@ -52,14 +52,24 @@ None of them needs xovi, and they stay on after a reboot ([how](docs/how-it-work
 3. **After every reMarkable OS update**, open the app and press **Restore** (or run the installer again): an OS
    update replaces the system files the add-ons live in.
 
-Menu keys, options, manual install with `vellum` and removal: [docs/installer.md](docs/installer.md).
+Every add-on installs what it needs with it (`rmpp-preload` always): [docs/packages.md](docs/packages.md).
 
-> **Before a factory reset or handing the tablet on**, use **Remove everything** in the app: a reset does not
-> remove the add-ons' system files. See [docs/installer.md](docs/installer.md#before-you-factory-reset-sell-or-return-the-tablet).
+- Without rmpp setup (Vellum on the command line): [docs/manual-install.md](docs/manual-install.md)
+- The installer's menu, buttons and options: [docs/installer.md](docs/installer.md)
+
+## Remove
+
+- **One add-on:** untick it in rmpp setup and press **Remove unticked installed** (or `vellum del <package>`).
+- **Everything:** **Remove everything** in rmpp setup; optionally with the add-ons' settings and data.
+- **Before a factory reset or handing the tablet on**, remove everything first: a reset does not remove the
+  add-ons' system files.
+
+Step by step, what stays and the command-line versions: [docs/uninstall.md](docs/uninstall.md).
 
 ## More
 
-- [docs/how-it-works.md](docs/how-it-works.md): how the add-ons load, compared with xovi; where packages come from
+- [docs/packages.md](docs/packages.md): every package, what comes with it, what needs it
+- [docs/how-it-works.md](docs/how-it-works.md): how the add-ons load; next to xovi and other mods; where packages come from
 - [MODS.md](MODS.md): add a mod to the installer menu
 - [docs/forking.md](docs/forking.md): your own package repository and signing key
 
