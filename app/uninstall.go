@@ -28,9 +28,12 @@ var vellumBase = map[string]bool{"vellum": true, "vellum-bash-completion": true,
 	"remarkable-os": true, "rmpp": true}
 
 const (
-	vellumBin    = "/home/root/.vellum/bin/vellum"
-	preloadDir   = "/usr/lib/rmpp-preload.d"
-	restartXochi = "systemctl reset-failed xochitl 2>/dev/null; systemctl restart xochitl; sleep 3"
+	vellumBin  = "/home/root/.vellum/bin/vellum"
+	preloadDir = "/usr/lib/rmpp-preload.d"
+	// rmpp-preload 0.2+: add-ons link into this folder in /home; its only file on the root fs is the drop-in
+	preloadHomeDir = "/home/root/.vellum/share/rmpp-preload/preload.d"
+	preloadDropIn  = "/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf"
+	restartXochi   = "systemctl reset-failed xochitl 2>/dev/null; systemctl restart xochitl; sleep 3"
 )
 
 // plan works out the removal from what is on the tablet. Only packages named in this catalog (and rmpp-preload)
@@ -69,9 +72,9 @@ func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 	sort.Strings(p.Packages)
 	sort.Strings(p.Kept)
 
-	// Mods that are not Vellum packages (GitHub release) or were copied by hand: a link in rmpp-preload.d and their
-	// folder in /usr/lib, named like the mod (or its package).
-	links, _ := t.run("ls "+preloadDir+" 2>/dev/null", nil, nil)
+	// Mods that are not Vellum packages (GitHub release) or were copied by hand: a link in rmpp-preload.d (in /usr/lib,
+	// or in /home with rmpp-preload 0.2) and their folder in /usr/lib, named like the mod (or its package).
+	links, _ := t.run("ls "+preloadDir+" "+preloadHomeDir+" 2>/dev/null", nil, nil)
 	for _, m := range a.mods {
 		if m.Parent != "" {
 			continue
@@ -106,7 +109,7 @@ func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 		var c []string
 		c = append(c, "mount -o remount,rw /")
 		for _, n := range p.Files {
-			c = append(c, fmt.Sprintf("rm -f %s/*-%s.so", preloadDir, n), "rm -rf /usr/lib/"+n)
+			c = append(c, fmt.Sprintf("rm -f %s/*-%s.so %s/*-%s.so", preloadDir, n, preloadHomeDir, n), "rm -rf /usr/lib/"+n)
 			if o.Purge {
 				c = append(c, "rm -rf /home/root/.local/share/"+n+" /home/root/.config/"+n)
 			}

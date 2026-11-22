@@ -139,9 +139,9 @@ func (a *App) status() (ConnectResult, error) {
 			r.Installed = append(r.Installed, m.ID)
 		}
 	}
-	// rmpp add-ons copied by hand (developer builds) load from /usr/lib/rmpp-preload.d/NN-<package>.so but are not
+	// rmpp add-ons copied by hand (developer builds) load from /usr/lib/rmpp-preload.d/NN-<package>.so (or rmpp-preload 0.2's preload.d in /home) but are not
 	// Vellum packages: mark them, so the list does not claim they are missing. Installing takes them over.
-	if out, err := t.run("ls /usr/lib/rmpp-preload.d/ 2>/dev/null", nil, nil); err == nil {
+	if out, err := t.run("ls "+preloadDir+"/ "+preloadHomeDir+"/ 2>/dev/null", nil, nil); err == nil {
 		links := strings.Fields(out)
 		for _, m := range a.mods {
 			if m.Installed || m.Type != "vellum" || m.Package == "" || m.Parent != "" {
@@ -155,7 +155,7 @@ func (a *App) status() (ConnectResult, error) {
 			}
 		}
 	}
-	r.NeedsRestore = len(installed) > 0 && t.ok("[ ! -x /usr/lib/rmpp-preload/launch ] && [ -x /home/root/.vellum/bin/vellum ]")
+	r.NeedsRestore = len(installed) > 0 && t.ok("[ ! -e "+preloadDropIn+" ] && [ -x /home/root/.vellum/bin/vellum ]")
 	if out, err := t.run("grep -hm1 '^IMG_VERSION=' /usr/share/remarkable/update.conf /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '\"'", nil, nil); err == nil {
 		if v := strings.TrimSpace(out); v != "" {
 			r.Model = "OS " + v
@@ -265,7 +265,7 @@ func (a *App) Install(ids []string) error {
 	}
 
 	// 4. After a reMarkable OS update the files in the root file system are gone: restore them.
-	if t.ok("[ ! -x /usr/lib/rmpp-preload/launch ] && [ -x /home/root/.vellum/bin/vellum ] && /home/root/.vellum/bin/vellum list 2>/dev/null | grep -qF '[installed]'") {
+	if t.ok("[ ! -e " + preloadDropIn + " ] && [ -x /home/root/.vellum/bin/vellum ] && /home/root/.vellum/bin/vellum list 2>/dev/null | grep -qF '[installed]'") {
 		if err := a.reenable(); err != nil {
 			return err
 		}
