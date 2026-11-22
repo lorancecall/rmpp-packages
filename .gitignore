@@ -6,3 +6,4 @@ site-addons/
 app/build/bin/
 app/frontend/wailsjs/
 app/*.exe
+__pycache__/
