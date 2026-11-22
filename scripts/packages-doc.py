@@ -111,8 +111,8 @@ Paper Pro, OS 3.29) and refuse to install elsewhere.
 ## Mods that are not Vellum packages (yet)
 
 The installer menu also offers these. rmpp setup downloads them from the project's latest GitHub release and runs
-its install script; Vellum does not track them, so nothing checks their dependencies when something is removed, and
-only **Remove everything** removes them.
+its install script. Vellum does not track them: nothing checks their dependencies when something is removed, only
+**Remove everything** removes them, and **Restore** does not bring them back after an OS update (install them again).
 
 | Mod | rmpp setup menu | Installed first | Project |
 |---|---|---|---|

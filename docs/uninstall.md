@@ -10,7 +10,8 @@ Pick the step that matches what you want. rmpp setup (the desktop app) and the c
 
 xochitl restarts once. A package that another installed package still needs stays installed (apk says which one
 needs it); `rmpp-preload` stays while any add-on is installed. The add-on's settings and data in `/home` stay, so a
-reinstall picks them up again; step 3 removes them.
+reinstall picks them up again. To delete one add-on's data, remove `/home/root/.config/<package>` and
+`/home/root/.local/share/<package>`; step 3 removes all of it.
 
 Mods that are not Vellum packages yet (end of [packages.md](packages.md)) cannot be removed one by one here: use
 step 2, or their project's `docs/install.md`.
