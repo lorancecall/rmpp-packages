@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-bt
 pkgver=0.1.0
-pkgrel=4
+pkgrel=5
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi)"
@@ -16,19 +16,30 @@ https://raw.githubusercontent.com/$upstream_author/rmpp-bt/v$pkgver/LICENSE
 rmpp-bluetooth.service
 rmpp-bt-reconnect.service
 reconnect
+boot
+rmpp-bt.env
 "
 options="!check !fhs !strip"
 
 # Each lifecycle function runs as its own script: no shared helpers, every step is written out.
 # Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+# Everything lives in /home (rmpp-preload's one-file layout): library, rcc and reconnect logger in the share folder,
+# a link in preload.d, the rcc path in env.d, and a boot hook in boot.d that copies the two units to
+# /run/systemd/system (RAM) and starts them at every boot. A factory reset removes it all. Older versions put the
+# files in /usr/lib and the units in /usr/lib/systemd/system: removed here.
 
 package() {
 	local d="$pkgdir"/home/root/.vellum/share/rmpp-bt
+	local p="$pkgdir"/home/root/.vellum/share/rmpp-preload
 	install -Dm755 "$srcdir"/librmpp-bt.so "$d"/librmpp-bt.so
 	install -Dm644 "$srcdir"/rmpp-bt.rcc "$d"/rmpp-bt.rcc
 	install -Dm644 "$srcdir"/rmpp-bluetooth.service "$d"/rmpp-bluetooth.service
 	install -Dm644 "$srcdir"/rmpp-bt-reconnect.service "$d"/rmpp-bt-reconnect.service
 	install -Dm755 "$srcdir"/reconnect "$d"/reconnect
+	install -dm755 "$p"/preload.d
+	ln -s ../../rmpp-bt/librmpp-bt.so "$p"/preload.d/50-rmpp-bt.so
+	install -Dm644 "$srcdir"/rmpp-bt.env "$p"/env.d/rmpp-bt.env
+	install -Dm755 "$srcdir"/boot "$p"/boot.d/50-rmpp-bt
 
 	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
 	echo "https://github.com/$upstream_author/rmpp-bt" > \
@@ -36,91 +47,56 @@ package() {
 }
 
 postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	s=/home/root/.vellum/share/rmpp-bt
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/librmpp-bt.so)"
-	cp "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so.new && chmod 755 /usr/lib/rmpp-bt/librmpp-bt.so.new && mv -f /usr/lib/rmpp-bt/librmpp-bt.so.new /usr/lib/rmpp-bt/librmpp-bt.so
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/rmpp-bt.rcc)"
-	cp "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc.new && chmod 644 /usr/lib/rmpp-bt/rmpp-bt.rcc.new && mv -f /usr/lib/rmpp-bt/rmpp-bt.rcc.new /usr/lib/rmpp-bt/rmpp-bt.rcc
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/reconnect)"
-	cp "$s"/reconnect /usr/lib/rmpp-bt/reconnect.new && chmod 755 /usr/lib/rmpp-bt/reconnect.new && mv -f /usr/lib/rmpp-bt/reconnect.new /usr/lib/rmpp-bt/reconnect
-	mkdir -p "$(dirname /usr/lib/systemd/system/rmpp-bluetooth.service)"
-	cp "$s"/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bluetooth.service.new && chmod 644 /usr/lib/systemd/system/rmpp-bluetooth.service.new && mv -f /usr/lib/systemd/system/rmpp-bluetooth.service.new /usr/lib/systemd/system/rmpp-bluetooth.service
-	mkdir -p "$(dirname /usr/lib/systemd/system/rmpp-bt-reconnect.service)"
-	cp "$s"/rmpp-bt-reconnect.service /usr/lib/systemd/system/rmpp-bt-reconnect.service.new && chmod 644 /usr/lib/systemd/system/rmpp-bt-reconnect.service.new && mv -f /usr/lib/systemd/system/rmpp-bt-reconnect.service.new /usr/lib/systemd/system/rmpp-bt-reconnect.service
-	mkdir -p /usr/lib/systemd/system/multi-user.target.wants /usr/lib/rmpp-preload.d
-	ln -sf ../rmpp-bluetooth.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
-	ln -sf /usr/lib/rmpp-bt/librmpp-bt.so /usr/lib/rmpp-preload.d/50-rmpp-bt.so
-	sync
-	systemctl daemon-reload
-	systemctl start rmpp-bluetooth.service || true
-	systemctl restart rmpp-bt-reconnect.service || true
-	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
+	if [ -e /usr/lib/rmpp-bt ] || [ -e /usr/lib/systemd/system/rmpp-bluetooth.service ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-bt.so /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+		rm -f /usr/lib/systemd/system/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
+		rm -rf /usr/lib/rmpp-bt
+		sync
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
+		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
+		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 postupgrade() {
-	/home/root/.vellum/bin/mount-rw
-	s=/home/root/.vellum/share/rmpp-bt
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/librmpp-bt.so)"
-	cp "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so.new && chmod 755 /usr/lib/rmpp-bt/librmpp-bt.so.new && mv -f /usr/lib/rmpp-bt/librmpp-bt.so.new /usr/lib/rmpp-bt/librmpp-bt.so
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/rmpp-bt.rcc)"
-	cp "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc.new && chmod 644 /usr/lib/rmpp-bt/rmpp-bt.rcc.new && mv -f /usr/lib/rmpp-bt/rmpp-bt.rcc.new /usr/lib/rmpp-bt/rmpp-bt.rcc
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/reconnect)"
-	cp "$s"/reconnect /usr/lib/rmpp-bt/reconnect.new && chmod 755 /usr/lib/rmpp-bt/reconnect.new && mv -f /usr/lib/rmpp-bt/reconnect.new /usr/lib/rmpp-bt/reconnect
-	mkdir -p "$(dirname /usr/lib/systemd/system/rmpp-bluetooth.service)"
-	cp "$s"/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bluetooth.service.new && chmod 644 /usr/lib/systemd/system/rmpp-bluetooth.service.new && mv -f /usr/lib/systemd/system/rmpp-bluetooth.service.new /usr/lib/systemd/system/rmpp-bluetooth.service
-	mkdir -p "$(dirname /usr/lib/systemd/system/rmpp-bt-reconnect.service)"
-	cp "$s"/rmpp-bt-reconnect.service /usr/lib/systemd/system/rmpp-bt-reconnect.service.new && chmod 644 /usr/lib/systemd/system/rmpp-bt-reconnect.service.new && mv -f /usr/lib/systemd/system/rmpp-bt-reconnect.service.new /usr/lib/systemd/system/rmpp-bt-reconnect.service
-	mkdir -p /usr/lib/systemd/system/multi-user.target.wants /usr/lib/rmpp-preload.d
-	ln -sf ../rmpp-bluetooth.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
-	ln -sf /usr/lib/rmpp-bt/librmpp-bt.so /usr/lib/rmpp-preload.d/50-rmpp-bt.so
-	sync
-	systemctl daemon-reload
-	systemctl start rmpp-bluetooth.service || true
-	systemctl restart rmpp-bt-reconnect.service || true
-	systemctl daemon-reload
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
-}
-
-# `vellum reenable` after an OS update: the root file system is already writable here.
-postosupgrade() {
-	s=/home/root/.vellum/share/rmpp-bt
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/librmpp-bt.so)"
-	cp "$s"/librmpp-bt.so /usr/lib/rmpp-bt/librmpp-bt.so.new && chmod 755 /usr/lib/rmpp-bt/librmpp-bt.so.new && mv -f /usr/lib/rmpp-bt/librmpp-bt.so.new /usr/lib/rmpp-bt/librmpp-bt.so
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/rmpp-bt.rcc)"
-	cp "$s"/rmpp-bt.rcc /usr/lib/rmpp-bt/rmpp-bt.rcc.new && chmod 644 /usr/lib/rmpp-bt/rmpp-bt.rcc.new && mv -f /usr/lib/rmpp-bt/rmpp-bt.rcc.new /usr/lib/rmpp-bt/rmpp-bt.rcc
-	mkdir -p "$(dirname /usr/lib/rmpp-bt/reconnect)"
-	cp "$s"/reconnect /usr/lib/rmpp-bt/reconnect.new && chmod 755 /usr/lib/rmpp-bt/reconnect.new && mv -f /usr/lib/rmpp-bt/reconnect.new /usr/lib/rmpp-bt/reconnect
-	mkdir -p "$(dirname /usr/lib/systemd/system/rmpp-bluetooth.service)"
-	cp "$s"/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bluetooth.service.new && chmod 644 /usr/lib/systemd/system/rmpp-bluetooth.service.new && mv -f /usr/lib/systemd/system/rmpp-bluetooth.service.new /usr/lib/systemd/system/rmpp-bluetooth.service
-	mkdir -p "$(dirname /usr/lib/systemd/system/rmpp-bt-reconnect.service)"
-	cp "$s"/rmpp-bt-reconnect.service /usr/lib/systemd/system/rmpp-bt-reconnect.service.new && chmod 644 /usr/lib/systemd/system/rmpp-bt-reconnect.service.new && mv -f /usr/lib/systemd/system/rmpp-bt-reconnect.service.new /usr/lib/systemd/system/rmpp-bt-reconnect.service
-	mkdir -p /usr/lib/systemd/system/multi-user.target.wants /usr/lib/rmpp-preload.d
-	ln -sf ../rmpp-bluetooth.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
-	ln -sf /usr/lib/rmpp-bt/librmpp-bt.so /usr/lib/rmpp-preload.d/50-rmpp-bt.so
-	sync
+	if [ -e /usr/lib/rmpp-bt ] || [ -e /usr/lib/systemd/system/rmpp-bluetooth.service ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-bt.so /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
+		rm -f /usr/lib/systemd/system/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
+		rm -rf /usr/lib/rmpp-bt
+		sync
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
+		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-bt
+		systemctl restart rmpp-bt-reconnect.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 predeinstall() {
-	/home/root/.vellum/bin/mount-rw
-	rm -f /usr/lib/rmpp-preload.d/50-rmpp-bt.so
-	rm -f /usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service
 	systemctl stop rmpp-bt-reconnect.service 2>/dev/null || true
-	rm -f /usr/lib/systemd/system/rmpp-bluetooth.service /usr/lib/systemd/system/rmpp-bt-reconnect.service
-	rm -rf /usr/lib/rmpp-bt
-	sync
+	rm -f /run/systemd/system/rmpp-bluetooth.service /run/systemd/system/rmpp-bt-reconnect.service
 	systemctl daemon-reload
+}
+
+postdeinstall() {
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
 	if [ "$VELLUM_PURGE" = "1" ]; then
 		rm -rf /home/root/.config/rmpp-bt
 	fi
@@ -129,7 +105,9 @@ sha512sums="
 055aeba995c359276a2ca1540e402e6c1df8d847dadd4aedaadeea79023b47e20162c81cbc0395f9aa2765f58b4a85432cc71387f80257875b5e5aac79b6ed90  librmpp-bt.so
 8ce09cc1c5c4ff4e74786b9aaee56db31725cf53b5cc22d641d0754579072a68fe5f48105b45a907aab583bfd2b40383b44a10263c44d56b4253ab1655541228  rmpp-bt.rcc
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
-e21a0497314cd0d95b2aee1f1065b5d8e23bc9553f0647cda0ba5480314d3d6b8cfe10096f2d4b6199412cbe36f54c9dce371a8cc6550804687a27cc4fa39e75  rmpp-bluetooth.service
-00bd5b828ff0e3f4a1ae9a9e35ccc6e2d24e17471ec0924e14d5c6e3f5ba736170bfe3e51f1d6dcecbb27f149c038027bd3eb6059cab16c0c56470c1a1272dcf  rmpp-bt-reconnect.service
+ca2b8c3ccc48a865071516d39adbab4ac408190010c1fc10056b753c9c7d08d06a4184dbc1bb1587df4dd009cdfeb1bfc84f00baea8d740948b78bafaee27833  rmpp-bluetooth.service
+9118b5934c2cfb97e2a455aa1f09bb756f6f61b3580e6e32c337bb58348558fd14b47f92a851d6e672e30588b072b5d1ae703fc7eb6869555fe1550bb723c6c1  rmpp-bt-reconnect.service
 c31fc4bb02b87551f5fee59df4e08adc1e0018ed165073b5fffb211869c6be9d7990ea975fc2c2eea537b88946dc6d1445b7d7151100b5393fb1587ac4655fc7  reconnect
+0893cda5f4a7e520d3dcf2ada513fb235418bc058c0ca70b678df9c6a2275ca2079213c6dedbdd2c46b6c55e84a75cb0183d9610bb242d7ef38e49a946e50d46  boot
+2c4350b2bcd0d8f3fd407a4fbb658cdc91f5f5ec54c91090367bde10c1be942839788c48be72afa36ce83eb5fc62e6355a3a02bf13f47c3bd9701bd1fdcc8ec1  rmpp-bt.env
 "

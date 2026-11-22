@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-tailscale
 pkgver=0.1.1
-pkgrel=0
+pkgrel=1
 _tsver=1.104.5
 upstream_author="lorancecall"
 category="network"
@@ -18,17 +18,23 @@ https://pkgs.tailscale.com/stable/tailscale_${_tsver}_arm64.tgz
 rmpp-tailscaled.service
 rmpp-tailscale-ssh.socket
 rmpp-tailscale-ssh@.service
+boot
+rmpp-tailscale.env
 "
 options="!check !fhs !strip"
 
 # Each lifecycle function runs as its own script: no shared helpers, every step is written out.
 # Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
-# The Tailscale binaries (~70 MB) stay in /home; only the UI library, rcc and the unit go to /usr/lib.
+# Everything lives in /home (rmpp-preload's one-file layout): UI library, rcc, units and the Tailscale binaries
+# (~70 MB) in the share folder, a link in preload.d, the rcc path in env.d, and a boot hook in boot.d that copies
+# the units to /run/systemd/system (RAM) at every boot. A factory reset removes it all. Older versions put files
+# in /usr/lib and /usr/lib/systemd/system: removed here.
 # SSH: rmpp-tailscale-ssh.socket listens on lo (tailscaled hands incoming connections to loopback).
 # Tailscale starts off; it is turned on from Settings > Tailscale (flag file in /home/root/.config/rmpp-tailscale).
 
 package() {
 	local d="$pkgdir"/home/root/.vellum/share/rmpp-tailscale
+	local p="$pkgdir"/home/root/.vellum/share/rmpp-preload
 	install -Dm755 "$srcdir"/librmpp-tailscale.so "$d"/librmpp-tailscale.so
 	install -Dm644 "$srcdir"/rmpp-tailscale.rcc "$d"/rmpp-tailscale.rcc
 	install -Dm644 "$srcdir"/rmpp-tailscaled.service "$d"/rmpp-tailscaled.service
@@ -36,6 +42,10 @@ package() {
 	install -Dm644 "$srcdir"/rmpp-tailscale-ssh@.service "$d"/rmpp-tailscale-ssh@.service
 	install -Dm755 "$srcdir"/tailscale_${_tsver}_arm64/tailscale "$d"/tailscale
 	install -Dm755 "$srcdir"/tailscale_${_tsver}_arm64/tailscaled "$d"/tailscaled
+	install -dm755 "$p"/preload.d
+	ln -s ../../rmpp-tailscale/librmpp-tailscale.so "$p"/preload.d/50-rmpp-tailscale.so
+	install -Dm644 "$srcdir"/rmpp-tailscale.env "$p"/env.d/rmpp-tailscale.env
+	install -Dm755 "$srcdir"/boot "$p"/boot.d/50-rmpp-tailscale
 
 	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
 	printf '%s\n' "https://github.com/$upstream_author/rmpp-tailscale" "https://github.com/tailscale/tailscale (BSD-3-Clause)" \
@@ -43,73 +53,57 @@ package() {
 }
 
 postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	s=/home/root/.vellum/share/rmpp-tailscale
-	mkdir -p /usr/lib/rmpp-tailscale /usr/lib/rmpp-preload.d /usr/lib/systemd/system/multi-user.target.wants
-	cp "$s"/librmpp-tailscale.so /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new && chmod 755 /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new && mv -f /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new /usr/lib/rmpp-tailscale/librmpp-tailscale.so
-	cp "$s"/rmpp-tailscale.rcc /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new && chmod 644 /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new && mv -f /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc
-	cp "$s"/rmpp-tailscaled.service /usr/lib/systemd/system/rmpp-tailscaled.service.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscaled.service.new && mv -f /usr/lib/systemd/system/rmpp-tailscaled.service.new /usr/lib/systemd/system/rmpp-tailscaled.service
-	cp "$s"/rmpp-tailscale-ssh.socket /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new && mv -f /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new /usr/lib/systemd/system/rmpp-tailscale-ssh.socket
-	cp "$s"/rmpp-tailscale-ssh@.service /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new && mv -f /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new /usr/lib/systemd/system/rmpp-tailscale-ssh@.service
-	ln -sf ../rmpp-tailscaled.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-tailscaled.service
-	ln -sf /usr/lib/rmpp-tailscale/librmpp-tailscale.so /usr/lib/rmpp-preload.d/50-rmpp-tailscale.so
-	sync
-	systemctl daemon-reload
-	systemctl try-restart rmpp-tailscaled.service || true
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
+	if [ -e /usr/lib/rmpp-tailscale ] || [ -e /usr/lib/systemd/system/rmpp-tailscaled.service ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-tailscale.so /usr/lib/systemd/system/multi-user.target.wants/rmpp-tailscaled.service
+		rm -f /usr/lib/systemd/system/rmpp-tailscaled.service /usr/lib/systemd/system/rmpp-tailscale-ssh.socket /usr/lib/systemd/system/rmpp-tailscale-ssh@.service
+		rm -rf /usr/lib/rmpp-tailscale
+		sync
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-tailscale
+		systemctl try-restart rmpp-tailscaled.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-tailscale
+		systemctl try-restart rmpp-tailscaled.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 postupgrade() {
-	/home/root/.vellum/bin/mount-rw
-	s=/home/root/.vellum/share/rmpp-tailscale
-	mkdir -p /usr/lib/rmpp-tailscale /usr/lib/rmpp-preload.d /usr/lib/systemd/system/multi-user.target.wants
-	cp "$s"/librmpp-tailscale.so /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new && chmod 755 /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new && mv -f /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new /usr/lib/rmpp-tailscale/librmpp-tailscale.so
-	cp "$s"/rmpp-tailscale.rcc /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new && chmod 644 /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new && mv -f /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc
-	cp "$s"/rmpp-tailscaled.service /usr/lib/systemd/system/rmpp-tailscaled.service.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscaled.service.new && mv -f /usr/lib/systemd/system/rmpp-tailscaled.service.new /usr/lib/systemd/system/rmpp-tailscaled.service
-	cp "$s"/rmpp-tailscale-ssh.socket /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new && mv -f /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new /usr/lib/systemd/system/rmpp-tailscale-ssh.socket
-	cp "$s"/rmpp-tailscale-ssh@.service /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new && mv -f /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new /usr/lib/systemd/system/rmpp-tailscale-ssh@.service
-	ln -sf ../rmpp-tailscaled.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-tailscaled.service
-	ln -sf /usr/lib/rmpp-tailscale/librmpp-tailscale.so /usr/lib/rmpp-preload.d/50-rmpp-tailscale.so
-	sync
-	systemctl daemon-reload
-	systemctl try-restart rmpp-tailscaled.service || true
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
-}
-
-# `vellum reenable` after an OS update: the root file system is already writable here.
-postosupgrade() {
-	s=/home/root/.vellum/share/rmpp-tailscale
-	mkdir -p /usr/lib/rmpp-tailscale /usr/lib/rmpp-preload.d /usr/lib/systemd/system/multi-user.target.wants
-	cp "$s"/librmpp-tailscale.so /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new && chmod 755 /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new && mv -f /usr/lib/rmpp-tailscale/librmpp-tailscale.so.new /usr/lib/rmpp-tailscale/librmpp-tailscale.so
-	cp "$s"/rmpp-tailscale.rcc /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new && chmod 644 /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new && mv -f /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc.new /usr/lib/rmpp-tailscale/rmpp-tailscale.rcc
-	cp "$s"/rmpp-tailscaled.service /usr/lib/systemd/system/rmpp-tailscaled.service.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscaled.service.new && mv -f /usr/lib/systemd/system/rmpp-tailscaled.service.new /usr/lib/systemd/system/rmpp-tailscaled.service
-	cp "$s"/rmpp-tailscale-ssh.socket /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new && mv -f /usr/lib/systemd/system/rmpp-tailscale-ssh.socket.new /usr/lib/systemd/system/rmpp-tailscale-ssh.socket
-	cp "$s"/rmpp-tailscale-ssh@.service /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new && chmod 644 /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new && mv -f /usr/lib/systemd/system/rmpp-tailscale-ssh@.service.new /usr/lib/systemd/system/rmpp-tailscale-ssh@.service
-	ln -sf ../rmpp-tailscaled.service /usr/lib/systemd/system/multi-user.target.wants/rmpp-tailscaled.service
-	ln -sf /usr/lib/rmpp-tailscale/librmpp-tailscale.so /usr/lib/rmpp-preload.d/50-rmpp-tailscale.so
-	sync
+	if [ -e /usr/lib/rmpp-tailscale ] || [ -e /usr/lib/systemd/system/rmpp-tailscaled.service ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-tailscale.so /usr/lib/systemd/system/multi-user.target.wants/rmpp-tailscaled.service
+		rm -f /usr/lib/systemd/system/rmpp-tailscaled.service /usr/lib/systemd/system/rmpp-tailscale-ssh.socket /usr/lib/systemd/system/rmpp-tailscale-ssh@.service
+		rm -rf /usr/lib/rmpp-tailscale
+		sync
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-tailscale
+		systemctl try-restart rmpp-tailscaled.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		/home/root/.vellum/share/rmpp-preload/boot.d/50-rmpp-tailscale
+		systemctl try-restart rmpp-tailscaled.service 2>/dev/null || true
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 predeinstall() {
 	systemctl stop rmpp-tailscaled.service 2>/dev/null || true
-	/home/root/.vellum/bin/mount-rw
-	rm -f /usr/lib/rmpp-preload.d/50-rmpp-tailscale.so
-	rm -f /usr/lib/systemd/system/multi-user.target.wants/rmpp-tailscaled.service
 	systemctl stop rmpp-tailscale-ssh.socket 2>/dev/null || true
-	rm -f /usr/lib/systemd/system/rmpp-tailscaled.service /usr/lib/systemd/system/rmpp-tailscale-ssh.socket /usr/lib/systemd/system/rmpp-tailscale-ssh@.service
-	rm -rf /usr/lib/rmpp-tailscale
-	sync
+	rm -f /run/systemd/system/rmpp-tailscaled.service /run/systemd/system/rmpp-tailscale-ssh.socket /run/systemd/system/rmpp-tailscale-ssh@.service
 	systemctl daemon-reload
+}
+
+postdeinstall() {
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
 	if [ "$VELLUM_PURGE" = "1" ]; then
 		rm -rf /home/root/.config/rmpp-tailscale /home/root/.local/share/rmpp-tailscale
 	fi
@@ -122,4 +116,6 @@ c1e6c770e18ec05a44e87cb1d53470634a3fbea64931d067b041ef964fe201343519de9776a9c56d
 3c3cf9c3ddab71bb2f6e6acfd33edbe86142ec2953acc614b9f981e7bad94e0095e75a6bc7c3179ce5502f6bfa6d7bc08c640462e03dd8ee13bf9e2e5bb0951f  rmpp-tailscaled.service
 590dcbb9b1975d2d0a372756fc1e180d7d9018e0dc8752002ad8539016e53fb9fcf7b9e0724a692474466ceebbfe329e0f2940638ecc6004e0777f3a0248c81f  rmpp-tailscale-ssh.socket
 fef37c519a57fb8e78f128b140a5c2bc76e319bbc36a42537401e73323c0846330145bcd9dfd845a3c9a55d4792cb23e031265200a29c63a15016306b356b030  rmpp-tailscale-ssh@.service
+aa42f07513336af943baddfabc3fbbd77c8528a6f162ec69ea6e36faeaf3cd41f3f7fcb1eb6342997ae9419178dab802cbdd64cc3e5e03bb919f21b0d7de3b84  boot
+2deb5eb864bb2bb0aab199eaed4a619364cf7d1163228de8b4d0c7b32e6a2a6e8d916f5a4cebad69925feb6707a56dd34ec5a5f2a4b07b43fa1a6c5014ba69a5  rmpp-tailscale.env
 "

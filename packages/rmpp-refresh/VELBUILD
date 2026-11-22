@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-refresh
 pkgver=0.3.0
-pkgrel=0
+pkgrel=1
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Refresh screen button in the notebook toolbar: a full e-paper refresh that clears ghosting"
@@ -17,54 +17,53 @@ options="!check !fhs !strip"
 
 # Each lifecycle function runs as its own script: no shared helpers, every step is written out.
 # Never `systemctl stop xochitl`: that powers the tablet off. reset-failed avoids the restart limit.
+# Everything lives in /home (rmpp-preload's one-file layout): the library in its share folder and a link in
+# rmpp-preload's preload.d, so a factory reset removes it. Older versions put it in /usr/lib: removed here.
 
 package() {
 	install -Dm755 "$srcdir"/librmpp-refresh.so "$pkgdir"/home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so
+	install -dm755 "$pkgdir"/home/root/.vellum/share/rmpp-preload/preload.d
+	ln -s ../../rmpp-refresh/librmpp-refresh.so "$pkgdir"/home/root/.vellum/share/rmpp-preload/preload.d/50-rmpp-refresh.so
 	install -Dm644 "$srcdir"/LICENSE "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE
 	echo "https://github.com/$upstream_author/rmpp-refresh" > "$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
 }
 
 postinstall() {
-	/home/root/.vellum/bin/mount-rw
-	mkdir -p /usr/lib/rmpp-refresh /usr/lib/rmpp-preload.d
-	cp /home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-refresh/librmpp-refresh.so.new && chmod 755 /usr/lib/rmpp-refresh/librmpp-refresh.so.new && mv -f /usr/lib/rmpp-refresh/librmpp-refresh.so.new /usr/lib/rmpp-refresh/librmpp-refresh.so
-	ln -sf /usr/lib/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
-	sync
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
+	if [ -e /usr/lib/rmpp-refresh ] || [ -L /usr/lib/rmpp-preload.d/50-rmpp-refresh.so ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
+		rm -rf /usr/lib/rmpp-refresh
+		sync
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
 postupgrade() {
-	/home/root/.vellum/bin/mount-rw
-	mkdir -p /usr/lib/rmpp-refresh /usr/lib/rmpp-preload.d
-	cp /home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-refresh/librmpp-refresh.so.new && chmod 755 /usr/lib/rmpp-refresh/librmpp-refresh.so.new && mv -f /usr/lib/rmpp-refresh/librmpp-refresh.so.new /usr/lib/rmpp-refresh/librmpp-refresh.so
-	ln -sf /usr/lib/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
-	sync
-	systemctl reset-failed xochitl 2>/dev/null || true
-	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
+	if [ -e /usr/lib/rmpp-refresh ] || [ -L /usr/lib/rmpp-preload.d/50-rmpp-refresh.so ]; then
+		/home/root/.vellum/bin/mount-rw
+		rm -f /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
+		rm -rf /usr/lib/rmpp-refresh
+		sync
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+		sleep 3
+		/home/root/.vellum/bin/mount-restore
+	else
+		systemctl reset-failed xochitl 2>/dev/null || true
+		systemctl restart xochitl
+	fi
 }
 
-# `vellum reenable` after an OS update: the root file system is already writable here.
-postosupgrade() {
-	mkdir -p /usr/lib/rmpp-refresh /usr/lib/rmpp-preload.d
-	cp /home/root/.vellum/share/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-refresh/librmpp-refresh.so.new && chmod 755 /usr/lib/rmpp-refresh/librmpp-refresh.so.new && mv -f /usr/lib/rmpp-refresh/librmpp-refresh.so.new /usr/lib/rmpp-refresh/librmpp-refresh.so
-	ln -sf /usr/lib/rmpp-refresh/librmpp-refresh.so /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
-	sync
-}
-
-predeinstall() {
-	/home/root/.vellum/bin/mount-rw
-	rm -f /usr/lib/rmpp-preload.d/50-rmpp-refresh.so
-	rm -rf /usr/lib/rmpp-refresh
-	sync
+# The files are gone now; restart so xochitl runs without the library.
+postdeinstall() {
 	systemctl reset-failed xochitl 2>/dev/null || true
 	systemctl restart xochitl
-	sleep 3
-	/home/root/.vellum/bin/mount-restore
 }
 sha512sums="
 a568808ebe7676fe4c253166c8e907818ab6bdde88a4b4a901de9ebf4d8c66014438aa6c0feb396d7f205dbbeee5190fcfac026a41ec7a362c102707f020a9f5  librmpp-refresh.so
