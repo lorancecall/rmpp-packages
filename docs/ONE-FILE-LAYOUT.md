@@ -21,6 +21,12 @@ transient unit), otherwise it is stopped with xochitl.
 
 ## What each add-on needs
 
+Status: all done on this branch (not yet tested on a tablet). rmpp-bt and rmpp-tailscale copy their units to
+`/run/systemd/system` (RAM) from their boot hook instead of using transient units, so the Settings page's
+`systemctl start/stop rmpp-tailscaled.service` keeps working without a code change. rmpp-lang needs 0.3.2
+(lorancecall/rmpp-lang#12: layouts next to `RMPPLANG_RCC`); rmpp-hwr needs its next release
+(lorancecall/rmpp-hwr#8).
+
 | Add-on | Root file system now | Change |
 |---|---|---|
 | rmpp-preload | launcher, drop-in, `rmpp-preload.d` | **done on this branch**: launcher in `/home`, fail-safe drop-in |
