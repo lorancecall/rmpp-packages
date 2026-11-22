@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-bt
 pkgver=0.1.0
-pkgrel=5
+pkgrel=6
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi)"
@@ -118,7 +118,7 @@ postosupgrade() {
 }
 
 predeinstall() {
-	systemctl stop rmpp-bt-reconnect.service 2>/dev/null || true
+	systemctl stop rmpp-bt-reconnect.service rmpp-bluetooth.service 2>/dev/null || true
 	rm -f /run/systemd/system/rmpp-bluetooth.service /run/systemd/system/rmpp-bt-reconnect.service
 	systemctl daemon-reload
 	mount -o remount,rw /

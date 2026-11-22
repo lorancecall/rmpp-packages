@@ -16,7 +16,16 @@ if [ -n "$(find /usr/lib/rmpp -name '*.old' 2>/dev/null | head -n 1)" ] || [ -n 
 	}
 fi
 # a package script could not go back to read-only while xochitl held a replaced library: do it now
-if grep -q ' / [^ ]* rw[ ,]' /proc/mounts; then
+# (a process that still has a deleted file of / open keeps it busy for a moment: retry, then name it in the journal)
+i=0
+while grep -q ' / [^ ]* rw[ ,]' /proc/mounts && [ $i -lt 10 ]; do
 	sync
-	mount -o remount,ro / || true
+	mount -o remount,ro / 2>/dev/null && break
+	i=$((i + 1))
+	sleep 1
+done
+if grep -q ' / [^ ]* rw[ ,]' /proc/mounts; then
+	held=$(grep -l ' (deleted)$' /proc/[0-9]*/maps 2>/dev/null | while read -r m; do
+		grep ' (deleted)$' "$m" | grep -q ' /usr/\| /etc/\| /lib' && cat "${m%/maps}/comm"; done | sort -u | tr '\n' ' ')
+	echo "rmpp restart: / stays read-write until the next boot (deleted files still open: ${held:-unknown})"
 fi
