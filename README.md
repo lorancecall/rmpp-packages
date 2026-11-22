@@ -28,29 +28,33 @@ None of them needs xovi, and they stay on after a reboot ([how](docs/how-it-work
 1. **Developer mode and the SSH password.** Turning developer mode on **erases the tablet** (sync first):
    Settings > General > Paper Tablet > Software > Advanced > Developer Mode. The password is then in Settings >
    General > Help > About > Copyrights and Licenses. Details and connection problems: [docs/ssh.md](docs/ssh.md).
-2. **Run rmpp setup** with the tablet on USB (`10.11.99.1`) or the same Wi-Fi, pick the add-ons, install.
+2. **Run rmpp setup** with the tablet on USB (`10.11.99.1`) or the same Wi-Fi, pick the add-ons, install. Two ways,
+   same result: pick the one you like.
 
    <img src="docs/rmpp-setup.png" alt="rmpp setup: connect, choose mods, install" width="560">
 
-   - **Desktop app** (Windows, macOS, Linux): *rmpp setup* from the
-     [releases](https://github.com/lorancecall/rmpp-packages/releases) (tags `app-v*`); first-run warning of an
-     unsigned app: [app/README.md](app/README.md).
-   - **Windows PowerShell** (needs the built-in OpenSSH client):
+   **App (GUI)**: download *rmpp setup* for Windows, macOS or Linux from the
+   **[latest release](https://github.com/lorancecall/rmpp-packages/releases/latest)** (tags `app-v*`) and open it.
+   It is not signed: the first-run warnings are in [app/README.md](app/README.md).
+
+   **Script (command line)**: on your computer, in a terminal.
+
+   - Windows PowerShell (needs the built-in OpenSSH client):
 
      ```powershell
      irm https://lorancecall.github.io/rmpp-packages/install-rmpp.ps1 -OutFile install-rmpp.ps1
      powershell -ExecutionPolicy Bypass -File install-rmpp.ps1
      ```
 
-   - **Linux / macOS:**
+   - Linux / macOS:
 
      ```sh
      curl -fsSL https://lorancecall.github.io/rmpp-packages/install-rmpp.sh -o install-rmpp.sh
      sh install-rmpp.sh
      ```
 
-3. **After every reMarkable OS update**, open the app and press **Restore** (or run the installer again): an OS
-   update replaces the system files the add-ons live in.
+3. **After every reMarkable OS update**: **Restore** in the app, or run the script again. An OS update replaces the
+   system files the add-ons live in.
 
 Every add-on installs what it needs with it (`rmpp-preload` always): [docs/packages.md](docs/packages.md).
 
@@ -59,8 +63,10 @@ Every add-on installs what it needs with it (`rmpp-preload` always): [docs/packa
 
 ## Remove
 
-- **One add-on:** untick it in rmpp setup and press **Remove unticked installed** (or `vellum del <package>`).
-- **Everything:** **Remove everything** in rmpp setup; optionally with the add-ons' settings and data.
+- **One add-on:** in the app, untick it and press **Remove unticked installed**; on the command line,
+  `vellum del <package>` on the tablet.
+- **Everything:** **Remove everything** in the app, or `sh install-rmpp.sh <tablet> --uninstall`; optionally with
+  the add-ons' settings and data.
 - **Before a factory reset or handing the tablet on**, remove everything first: a reset does not remove the
   add-ons' system files.
 
