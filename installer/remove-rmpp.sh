@@ -82,6 +82,7 @@ else
 		mount -o remount,ro / || echo "note: / is still read-write until the next restart"
 	fi
 fi
+rm -rf /home/root/.cache/rmpp-mods   # rmpp setup's download folder for release-type mods
 if [ -n "$PURGE" ]; then
 	# what the packages' own purge left (older versions purged nothing): the folders named after each removed package
 	for p in $ours; do
