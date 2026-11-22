@@ -1,0 +1,22 @@
+#!/bin/sh
+# /usr/lib/rmpp/restart: restart xochitl once, then delete the files that package scripts set aside.
+# Package scripts never restart xochitl themselves: each one re-arms the transient timer rmpp-restart-xochitl
+# (15 s), which runs this, so a Vellum transaction restarts xochitl once, after its last script.
+# A library that xochitl has loaded cannot be deleted while / goes back to read-only ("busy"), so the scripts
+# rename replaced files to *.old or move removed ones to /usr/lib/rmpp/.trash; this deletes them afterwards.
+# Never `systemctl stop xochitl` (it powers the tablet off); reset-failed avoids the restart limit.
+systemctl reset-failed xochitl 2>/dev/null || true
+systemctl restart xochitl
+sleep 3
+if [ -n "$(find /usr/lib/rmpp -name '*.old' 2>/dev/null | head -n 1)" ] || [ -n "$(ls -A /usr/lib/rmpp/.trash 2>/dev/null)" ]; then
+	mount -o remount,rw / && {
+		find /usr/lib/rmpp -name '*.old' -exec rm -f {} +
+		rm -rf /usr/lib/rmpp/.trash
+		sync
+	}
+fi
+# a package script could not go back to read-only while xochitl held a replaced library: do it now
+if grep -q ' / [^ ]* rw[ ,]' /proc/mounts; then
+	sync
+	mount -o remount,ro / || true
+fi
