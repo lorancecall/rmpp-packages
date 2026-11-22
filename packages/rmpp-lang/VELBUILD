@@ -1,6 +1,6 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang
-pkgver=0.3.2
+pkgver=0.3.3
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"
@@ -116,7 +116,7 @@ predeinstall() {
 		{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }
 }
 sha512sums="
-44124aa21ca31274e0beaa790ea0566329efb1c592b611b53e6b61a7b91cbf50ab97ef1276e55eafdfa27f40be6ef32ecac973043742b54b88083a3f22ec704b  librmpp-lang.so
+f3d9c39153b2e060d89c02c85ebcba603ec755822ee2d43937d1d3b4a521f64f1fb8b5a81d6cd268ce8771e580a5e7b3c159401fd765143243bd18b99fd668dc  librmpp-lang.so
 a41fecbc15420b09616f2507b255c5c9ac060ebd37942c65ef40e255372dad43fab6eab36f1344bd1de69cf01af51f9cc2271d033a955f324df09b0eec287e12  rmpp-lang.rcc
 f813d9f52f383af5f002062a13b8cdd1ed1ff2ed1f825adf751f949fbe73281f1e834639239bc02fba510ac718d08af63e6d5a1805b77928f069cf26d07dcc4c  rmpp-lang
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
