@@ -23,11 +23,14 @@ V=/home/root/.vellum/bin/vellum
 # 1. packages
 if [ -x "$V" ]; then
 	pkgs=$("$V" list 2>/dev/null | grep -F '[installed]' | cut -d' ' -f1 | sed 's/-[0-9][^-]*-r[0-9]*$//' |
-		grep -E '^rmpp-(preload|refresh|bt|tailscale|lang|lang-.+|ridi|hwr)$' | tr '\n' ' ')
+		grep -E '^rmpp-.+$' | tr '\n' ' ')   # every rmpp add-on and its add-ons ("rmpp" alone is Vellum's device package)
 	if [ -n "$pkgs" ]; then
 		echo "removing packages: $pkgs"
 		if [ -n "$PURGE" ]; then "$V" purge $pkgs; else "$V" del $pkgs; fi || echo "warning: vellum could not remove everything; deleting the files below anyway"
 	fi
+	# the rmpp package repository and its signing key (other repositories stay)
+	sed -i '\#^https://lorancecall.github.io/rmpp-packages$#d' /home/root/.vellum/etc/apk/repositories 2>/dev/null || true
+	rm -f /home/root/.vellum/etc/apk/keys/lorancecall-rmpp.rsa.pub
 fi
 
 # 2. leftover system files
