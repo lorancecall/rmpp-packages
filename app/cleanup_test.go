@@ -24,15 +24,15 @@ var afterReset = []string{
 
 func TestLeftoverOwner(t *testing.T) {
 	for p, want := range map[string]string{
-		"/usr/lib/rmpp-preload.d/60-rmpp-hwr.so":                                  "rmpp-hwr",
-		"/usr/lib/rmpp-preload.d/40-rmpp-remote.so":                               "rmpp-remote",
-		"/usr/lib/rmpp-preload.d":                                                 "rmpp-preload",
-		"/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf":          "rmpp-preload",
-		"/usr/lib/systemd/system/rmpp-tailscale-ssh@.service":                     "rmpp-tailscale",
-		"/usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service":  "rmpp-bt",
-		"/usr/lib/systemd/system/rmpp-bt-reconnect.service":                       "rmpp-bt",
-		"/usr/bin/rmpp-lang":                                                      "rmpp-lang",
-		"/usr/lib/rmpp-refresh":                                                   "rmpp-refresh",
+		"/usr/lib/rmpp-preload.d/60-rmpp-hwr.so":                                 "rmpp-hwr",
+		"/usr/lib/rmpp-preload.d/40-rmpp-remote.so":                              "rmpp-remote",
+		"/usr/lib/rmpp-preload.d":                                                "rmpp-preload",
+		"/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf":         "rmpp-preload",
+		"/usr/lib/systemd/system/rmpp-tailscale-ssh@.service":                    "rmpp-tailscale",
+		"/usr/lib/systemd/system/multi-user.target.wants/rmpp-bluetooth.service": "rmpp-bt",
+		"/usr/lib/systemd/system/rmpp-bt-reconnect.service":                      "rmpp-bt",
+		"/usr/bin/rmpp-lang":                                                     "rmpp-lang",
+		"/usr/lib/rmpp-refresh":                                                  "rmpp-refresh",
 	} {
 		if got := leftoverOwner(p); got != want {
 			t.Errorf("leftoverOwner(%q) = %q, want %q", p, got, want)
@@ -82,6 +82,65 @@ func TestCleanupKeepsInstalledPackages(t *testing.T) {
 	keeps := !strings.Contains(strings.Join(p.Files, " "), "50-rmpp-bt.so")
 	if !has || !keeps {
 		t.Errorf("preload links wrong: %v", p.Files)
+	}
+}
+
+// What `ls -d` shows after a factory reset of a tablet with rmpp-preload 0.2 (everything under /usr/lib/rmpp).
+var afterResetRmppDir = []string{
+	"/usr/lib/rmpp/launch", "/usr/lib/rmpp/restart", "/usr/lib/rmpp/preload.d", "/usr/lib/rmpp/env.d",
+	"/usr/lib/rmpp/boot.d", "/usr/lib/rmpp/units", "/usr/lib/rmpp/rmpp-bt", "/usr/lib/rmpp/rmpp-lang",
+	"/usr/lib/rmpp/rmpp-hwr", "/usr/lib/rmpp/rmpp-tailscale", "/usr/lib/rmpp/rmpp-refresh",
+	"/usr/lib/rmpp/preload.d/50-rmpp-bt.so", "/usr/lib/rmpp/preload.d/60-rmpp-hwr.so",
+	"/usr/lib/rmpp/env.d/rmpp-bt.env", "/usr/lib/rmpp/boot.d/50-rmpp-bt", "/usr/lib/rmpp/units/rmpp-bt",
+	"/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-preload.conf",
+}
+
+func TestLeftoverOwnerRmppDir(t *testing.T) {
+	for p, want := range map[string]string{
+		"/usr/lib/rmpp/launch":                      "rmpp-preload",
+		"/usr/lib/rmpp/.trash":                      "rmpp-preload",
+		"/usr/lib/rmpp/rmpp-hwr":                    "rmpp-hwr",
+		"/usr/lib/rmpp/preload.d/60-rmpp-hwr.so":    "rmpp-hwr",
+		"/usr/lib/rmpp/preload.d/40-rmpp-remote.so": "rmpp-remote",
+		"/usr/lib/rmpp/env.d/rmpp-bt.env":           "rmpp-bt",
+		"/usr/lib/rmpp/boot.d/50-rmpp-tailscale":    "rmpp-tailscale",
+		"/usr/lib/rmpp/units/rmpp-bt":               "rmpp-bt",
+	} {
+		if got := leftoverOwner(p); got != want {
+			t.Errorf("leftoverOwner(%q) = %q, want %q", p, got, want)
+		}
+	}
+}
+
+func TestCleanupRmppDirAfterFactoryReset(t *testing.T) {
+	p := planCleanup(afterResetRmppDir, map[string]bool{})
+	files := strings.Join(p.Files, " ")
+	if !strings.Contains(files, "/usr/lib/rmpp ") && !strings.HasSuffix(files, "/usr/lib/rmpp") {
+		t.Errorf("/usr/lib/rmpp not removed as a whole: %v", p.Files)
+	}
+	for _, f := range p.Files {
+		if strings.HasPrefix(f, "/usr/lib/rmpp/") {
+			t.Errorf("%s listed although /usr/lib/rmpp goes", f)
+		}
+	}
+	if !strings.Contains(files, "zz-rmpp-preload.conf") || !p.Restart {
+		t.Errorf("drop-in or restart missing: %+v", p)
+	}
+}
+
+func TestCleanupRmppDirKeepsInstalled(t *testing.T) {
+	// rmpp-preload and rmpp-bt still installed: only the others' folders and links go
+	p := planCleanup(afterResetRmppDir, map[string]bool{"rmpp-preload": true, "rmpp-bt": true})
+	files := strings.Join(p.Files, " ")
+	for _, keep := range []string{"/usr/lib/rmpp/launch", "/usr/lib/rmpp/rmpp-bt", "50-rmpp-bt.so", "rmpp-bt.env", "zz-rmpp-preload"} {
+		if strings.Contains(files, keep) {
+			t.Errorf("would remove %s: %v", keep, p.Files)
+		}
+	}
+	for _, gone := range []string{"/usr/lib/rmpp/rmpp-hwr", "/usr/lib/rmpp/preload.d/60-rmpp-hwr.so", "/usr/lib/rmpp/rmpp-lang"} {
+		if !strings.Contains(files, gone) {
+			t.Errorf("does not remove %s: %v", gone, p.Files)
+		}
 	}
 }
 

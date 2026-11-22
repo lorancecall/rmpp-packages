@@ -12,10 +12,28 @@ import (
 // factory reset (which wipes /home, Vellum included) leaves them behind with no package to remove them, and xochitl
 // keeps loading them. This finds every rmpp system file whose package is not installed and removes it.
 
-// Where rmpp add-ons put system files (see the VELBUILDs and rmpp-hwr's installer).
-const leftoverGlobs = "/usr/lib/rmpp-* /usr/bin/rmpp-* /usr/lib/rmpp-preload.d/* " +
+// Where rmpp add-ons put system files (see the VELBUILDs and rmpp-hwr's installer). rmpp-preload 0.2+ keeps all of
+// them under /usr/lib/rmpp plus xochitl's drop-in; the other paths are from older versions.
+const leftoverGlobs = "/usr/lib/rmpp/* /usr/lib/rmpp/.trash /usr/lib/rmpp/preload.d/* /usr/lib/rmpp/env.d/* " +
+	"/usr/lib/rmpp/boot.d/* /usr/lib/rmpp/units/* " +
+	"/usr/lib/rmpp-* /usr/bin/rmpp-* /usr/lib/rmpp-preload.d/* " +
 	"/usr/lib/systemd/system/rmpp-* /usr/lib/systemd/system/multi-user.target.wants/rmpp-* " +
 	"/usr/lib/systemd/system/xochitl.service.d/zz-rmpp-*"
+
+// rmppDir: rmpp-preload 0.2+'s folder; its own entries belong to rmpp-preload, the others to an add-on.
+const rmppDir = "/usr/lib/rmpp"
+
+var rmppPreloadEntries = map[string]bool{"launch": true, "restart": true, "preload.d": true, "env.d": true,
+	"boot.d": true, "units": true, ".trash": true}
+
+// linkOwner: NN-<package>.so, NN-<package> (boot hook) or <package>.env -> <package>
+func linkOwner(base string) string {
+	name := strings.TrimSuffix(strings.TrimSuffix(base, ".so"), ".env")
+	if i := strings.Index(name, "-"); i >= 0 && i <= 3 && strings.Trim(name[:i], "0123456789") == "" {
+		name = name[i+1:]
+	}
+	return name
+}
 
 // systemd units named differently from their package.
 var unitOwner = map[string]string{
@@ -28,6 +46,17 @@ func leftoverOwner(p string) string {
 	base := path.Base(p)
 	dir := path.Dir(p)
 	switch {
+	case p == rmppDir:
+		return "rmpp-preload"
+	case dir == rmppDir: // launch, restart, preload.d, ... or an add-on's folder
+		if rmppPreloadEntries[base] {
+			return "rmpp-preload"
+		}
+		return base
+	case dir == rmppDir+"/preload.d" || dir == rmppDir+"/env.d" || dir == rmppDir+"/boot.d":
+		return linkOwner(base)
+	case dir == rmppDir+"/units": // units/<package>/
+		return base
 	case p == "/usr/lib/rmpp-preload" || p == "/usr/lib/rmpp-preload.d" || strings.HasPrefix(base, "zz-rmpp-preload"):
 		return "rmpp-preload"
 	case dir == "/usr/lib/rmpp-preload.d": // NN-<package>.so
@@ -79,17 +108,25 @@ func planCleanup(listing []string, installed map[string]bool) CleanupPlan {
 		if strings.HasPrefix(f, "/usr/lib/systemd/system/rmpp-") && !strings.Contains(f, "@") {
 			units[path.Base(f)] = true
 		}
-		if o == "rmpp-preload" || strings.HasPrefix(f, "/usr/lib/rmpp-preload.d/") {
+		if o == "rmpp-preload" || strings.HasPrefix(f, "/usr/lib/rmpp-preload.d/") || strings.HasPrefix(f, rmppDir+"/preload.d/") {
 			p.Restart = true
 		}
 	}
-	// a removed preload folder takes its links along: don't list them twice
+	// a removed rmpp-preload takes its folders along: remove /usr/lib/rmpp (and the old preload.d) as a whole
 	if owners["rmpp-preload"] {
 		var fs []string
+		hasRmpp := false
 		for _, f := range p.Files {
+			if f == rmppDir || strings.HasPrefix(f, rmppDir+"/") {
+				hasRmpp = true
+				continue
+			}
 			if !strings.HasPrefix(f, "/usr/lib/rmpp-preload.d/") {
 				fs = append(fs, f)
 			}
+		}
+		if hasRmpp {
+			fs = append(fs, rmppDir)
 		}
 		p.Files = fs
 	}
