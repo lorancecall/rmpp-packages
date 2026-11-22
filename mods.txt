@@ -4,4 +4,5 @@ lorancecall/rmpp-lang
 lorancecall/rmpp-bt
 lorancecall/rmpp-tailscale
 lorancecall/rmpp-hwr
+lorancecall/rmpp-textobj
 lorancecall/rmpp-refresh
