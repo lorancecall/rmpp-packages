@@ -53,11 +53,15 @@ The computer downloads every asset from `https://github.com/<repo>/releases/late
 runs `sh rmpp-install.sh` there as root, then deletes the folder. The script must follow the tablet rules:
 
 - the root file system is read-only: `mount -o remount,rw /`, copy to `*.new` then `mv`, `mount -o remount,ro /`
-  at the end;
-- never `systemctl stop xochitl` (it powers the tablet off); run `systemctl reset-failed xochitl` before
-  `systemctl restart xochitl`;
-- add-ons for xochitl go to `/usr/lib/<mod>/` with a link in `/usr/lib/rmpp-preload.d/` (loaded by
-  `rmpp-preload`), data and large files to `/home/root/`.
+  at the end (not Vellum's `mount-rw`: it unmounts `/etc` recursively and drops `/etc/dropbear`, the SSH host key);
+- never `systemctl stop xochitl` (it powers the tablet off). With rmpp-preload 0.2+ do not restart xochitl
+  yourself: re-arm the shared timer (`systemd-run --unit=rmpp-restart-xochitl --on-active=15 ... /usr/lib/rmpp/restart`,
+  see rmpp-hwr's `rmpp-install.sh`), so one restart serves the whole installation;
+- add-ons for xochitl go to `/usr/lib/rmpp/<mod>/` with a link in `/usr/lib/rmpp/preload.d/` (loaded by
+  `rmpp-preload` 0.2+; older versions: `/usr/lib/<mod>/` and `/usr/lib/rmpp-preload.d/`). A library xochitl has
+  loaded is renamed to `*.old` (or moved to `/usr/lib/rmpp/.trash/`), never deleted; `/usr/lib/rmpp/restart`
+  deletes it after the restart. Data and large files go to `/home/root/`; nothing xochitl needs at startup may be
+  in `/home` (it is mounted after xochitl starts).
 
 After a reMarkable OS update `/usr/lib` is replaced: running the installer again reinstalls the mod.
 
