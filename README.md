@@ -19,7 +19,7 @@ The same goes for all my rmpp projects, packaged here or not:
 | [rmpp-bt](https://github.com/lorancecall/rmpp-bt) | Bluetooth settings page and keyboard support |
 | [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale) | Tailscale with a Settings page, SSH over Tailscale |
 | [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh screen button (full e-paper refresh) |
-| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | On-device handwriting recognition (convert to text), tools to collect handwriting and train models |
+| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | On-device handwriting recognition: convert to typed text or to movable, editable ink text; Korean model plus Chinese, Japanese, English and Latin base packs; tools to collect handwriting and train models |
 | [rmpp-hwr-db](https://github.com/lorancecall/rmpp-hwr-db) | Open handwriting dataset written on the Paper Pro (CC BY 4.0; contributions welcome) |
 | rmpp setup ([app/](app/)) | Desktop installer for all of the above (Windows, macOS, Linux) |
 
@@ -137,7 +137,8 @@ between Korean and English** (the language starts from your system language), En
 (nothing is installed).
 
 Besides the packages above, the menu offers [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) (handwriting
-recognition), which is not a Vellum package: the installer downloads it from its GitHub release.
+recognition with its language packs, ~80 MB in /home), which is not a Vellum package: the installer downloads it
+from its latest GitHub release.
 
 The menu is built from a catalog ([`mods.txt`](mods.txt) plus an `rmpp-mod.conf` in each mod's repository), so
 adding a mod is one line: see [MODS.md](MODS.md).
