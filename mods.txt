@@ -5,3 +5,4 @@ lorancecall/rmpp-bt
 lorancecall/rmpp-tailscale
 lorancecall/rmpp-hwr
 lorancecall/rmpp-refresh
+lorancecall/rmpp-studio

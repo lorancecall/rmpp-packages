@@ -21,6 +21,7 @@ The same goes for all my rmpp projects, packaged here or not:
 | [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh screen button (full e-paper refresh) |
 | [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | On-device handwriting recognition: convert to typed text or to movable, editable ink text; Korean model plus Chinese, Japanese, English and Latin base packs; tools to collect handwriting and train models |
 | [rmpp-hwr-db](https://github.com/lorancecall/rmpp-hwr-db) | Open handwriting dataset written on the Paper Pro (CC BY 4.0; contributions welcome) |
+| [rmpp-studio](https://github.com/lorancecall/rmpp-studio) | Desktop app to view and control the tablet from a computer (screen, tap, pen, keyboard, tutorial recording); its tablet part is rmpp-remote |
 | rmpp setup ([app/](app/)) | Desktop installer for all of the above (Windows, macOS, Linux) |
 
 | Package | What it does |
@@ -138,7 +139,8 @@ between Korean and English** (the language starts from your system language), En
 
 Besides the packages above, the menu offers [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) (handwriting
 recognition with its language packs, ~80 MB in /home), which is not a Vellum package: the installer downloads it
-from its latest GitHub release.
+from its latest GitHub release. The same goes for rmpp-remote, the tablet part of
+[rmpp-studio](https://github.com/lorancecall/rmpp-studio) (remote control from a computer, not selected by default).
 
 The menu is built from a catalog ([`mods.txt`](mods.txt) plus an `rmpp-mod.conf` in each mod's repository), so
 adding a mod is one line: see [MODS.md](MODS.md).
