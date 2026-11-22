@@ -23,7 +23,9 @@ options="!check !fhs !strip"
 # Everything lives in /home (rmpp-preload's one-file layout): library, rcc and the rmpp-lang command in the share
 # folder, a link in preload.d and the rcc path in env.d. Language add-ons (rmpp-lang-<code>, scripts/lang-addons.py)
 # put their layouts in languages/ next to rmpp-lang.rcc. A factory reset removes it all. Older versions put files
-# in /usr/lib/rmpp-lang and /usr/bin/rmpp-lang: removed here (with the add-ons' layouts there).
+# in /usr/lib/rmpp-lang and /usr/bin/rmpp-lang: removed here (with the add-ons' layouts there). The running xochitl
+# keeps the old library mapped, so / cannot go read-only before the restart: a plain remount rw (/etc untouched,
+# unlike mount-rw), and a watcher puts / back to read-only after the one restart of the transaction.
 
 package() {
 	local d="$pkgdir"/home/root/.vellum/share/rmpp-lang
@@ -43,15 +45,18 @@ package() {
 
 postinstall() {
 	if [ -e /usr/lib/rmpp-lang ] || [ -e /usr/bin/rmpp-lang ] || [ -L /usr/lib/rmpp-preload.d/50-rmpp-lang.so ]; then
-		/home/root/.vellum/bin/mount-rw
+		mount -o remount,rw /
 		rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so /usr/bin/rmpp-lang
 		rm -rf /usr/lib/rmpp-lang
 		sync
-		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
-		sleep 3
-		/home/root/.vellum/bin/mount-restore
+		# / back to read-only once xochitl has restarted (its main PID changed; gives up after 10 minutes), whichever
+		# package script armed the restart timer last
+		systemd-run --quiet --unit=rmpp-lang-remount-ro /bin/sh -c 'p=$(systemctl show -p MainPID --value xochitl); i=0; while [ "$(systemctl show -p MainPID --value xochitl)" = "$p" ] && [ $i -lt 600 ]; do sleep 2; i=$((i+2)); done; sleep 3; mount -o remount,ro /' || true
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; sleep 3; mount -o remount,ro /; }
 	else
 		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
 		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
@@ -63,15 +68,18 @@ postinstall() {
 
 postupgrade() {
 	if [ -e /usr/lib/rmpp-lang ] || [ -e /usr/bin/rmpp-lang ] || [ -L /usr/lib/rmpp-preload.d/50-rmpp-lang.so ]; then
-		/home/root/.vellum/bin/mount-rw
+		mount -o remount,rw /
 		rm -f /usr/lib/rmpp-preload.d/50-rmpp-lang.so /usr/bin/rmpp-lang
 		rm -rf /usr/lib/rmpp-lang
 		sync
-		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true   # this restart covers earlier requests
-		systemctl reset-failed xochitl 2>/dev/null || true
-		systemctl restart xochitl
-		sleep 3
-		/home/root/.vellum/bin/mount-restore
+		# / back to read-only once xochitl has restarted (its main PID changed; gives up after 10 minutes), whichever
+		# package script armed the restart timer last
+		systemd-run --quiet --unit=rmpp-lang-remount-ro /bin/sh -c 'p=$(systemctl show -p MainPID --value xochitl); i=0; while [ "$(systemctl show -p MainPID --value xochitl)" = "$p" ] && [ $i -lt 600 ]; do sleep 2; i=$((i+2)); done; sleep 3; mount -o remount,ro /' || true
+		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
+		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
+		systemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \
+			/bin/sh -c 'systemctl reset-failed xochitl; systemctl restart xochitl' || \
+			{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; sleep 3; mount -o remount,ro /; }
 	else
 		# one xochitl restart per Vellum transaction: (re)arm a timer, so the last package script wins
 		systemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true
