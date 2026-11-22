@@ -1,13 +1,24 @@
 # Adding a mod to the rmpp installer
 
-The installers (`installer/install-rmpp.sh`, `installer/install-rmpp.ps1`) build their checkbox menu from a
-catalog, so a new mod needs no installer change:
+A new add-on needs no change in this repository. In the add-on's own GitHub repository (public, owned by
+lorancecall):
 
-1. Put an `rmpp-mod.conf` at the root of the mod's GitHub repository (default branch).
-2. Add the repository (`owner/name`) as a line in [`mods.txt`](mods.txt). The installers download
-   `https://lorancecall.github.io/rmpp-packages/mods.txt` each time they run, so the next run shows the mod.
+1. Give it the topic **`rmpp`** (repository settings, "Topics").
+2. Put an `rmpp-mod.conf` at its root (default branch): its entry in the installer menu (below).
+3. Put each Vellum package it ships in `packaging/<package>/VELBUILD`, with the files the VELBUILD lists next to
+   it. The VELBUILD installs, removes, restores and purges by itself: [how-it-works.md](docs/how-it-works.md#what-a-package-takes-care-of-itself).
+4. After a release, update the VELBUILD (`pkgver`, sums) on the default branch. Optionally start the build at once:
+   `gh workflow run publish.yml -R lorancecall/rmpp-packages`.
 
-Only add repositories you trust: a `type=release` mod runs its own install script as root on the Paper Pro.
+[`scripts/registry.py`](scripts/registry.py) finds the add-ons by that topic on every build (daily, on every push
+here, and when started by hand or by a `repository_dispatch` of type `rmpp-release`): it rewrites
+[`mods.txt`](mods.txt) and builds the packages from the add-ons' `packaging/` folders. A package folder there wins
+over one of the same name under [`packages/`](packages/), which keeps rmpp-preload and the add-ons whose VELBUILD
+has not moved yet. The installers download `https://lorancecall.github.io/rmpp-packages/mods.txt` each time they
+run. Menu order: mods already in mods.txt keep their place; new ones follow (`order=` in rmpp-mod.conf, default
+100, then by name). `python3 scripts/registry.py --list` shows what it finds.
+
+Only repositories of the owner are read: a `type=release` mod runs its own install script as root on the Paper Pro.
 
 ## rmpp-mod.conf
 
@@ -25,6 +36,7 @@ Only add repositories you trust: a `type=release` mod runs its own install scrip
 | `assets` | `release` | release asset names (space separated) downloaded from `releases/latest`; must include `rmpp-install.sh` |
 | `check` | `release` | shell test run on the Paper Pro; success = installed (for the "installed" mark) |
 | `addons` | | URL of the mod's add-on list (below); its add-ons are listed right under the mod |
+| `order` | | place in the menu for a mod not yet in mods.txt (lower first; default 100) |
 
 ## Add-ons
 
