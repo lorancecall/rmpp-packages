@@ -49,10 +49,11 @@ Installing, upgrading or removing several add-ons restarts the Paper Pro's scree
 
 ## Where the packages come from
 
-Each package is built from its project's GitHub release (the `source=` lines of `packages/<name>/VELBUILD`); the
-`rmpp-lang-<code>` add-ons are generated from rmpp-lang by `scripts/lang-addons.py`. GitHub Actions
-(`.github/workflows/publish.yml`) builds and signs them on every push to `main` and publishes the repository with
-GitHub Pages. Every package and the index are signed with the key `lorancecall-rmpp`; its public half is at
+Each package is built from its project's GitHub release, by the VELBUILD in that project's `packaging/<name>/`
+folder (found through the topic `rmpp`: [MODS.md](../MODS.md)); rmpp-preload and rmpp-lang keep theirs in
+`packages/` here, and the `rmpp-lang-<code>` add-ons are generated from rmpp-lang by `scripts/lang-addons.py`.
+GitHub Actions (`.github/workflows/publish.yml`) builds and signs them on every push to `main`, daily, and when
+started after a release, and publishes the repository with GitHub Pages. Every package and the index are signed with the key `lorancecall-rmpp`; its public half is at
 `https://lorancecall.github.io/rmpp-packages/lorancecall-rmpp.rsa.pub`.
 
 ## What a package takes care of itself
