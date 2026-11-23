@@ -81,7 +81,7 @@ func hostKeyCallback(host string) ssh.HostKeyCallback {
 			if host+" "+k == line {
 				return nil
 			}
-			return fmt.Errorf("%w for %s: if the tablet was reset, remove its line from %s", errHostKeyChanged, host, p)
+			return fmt.Errorf("%w for %s: if the Paper Pro was reset, remove its line from %s", errHostKeyChanged, host, p)
 		}
 		_ = os.MkdirAll(filepath.Dir(p), 0o700)
 		f, err := os.OpenFile(p, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
@@ -119,7 +119,7 @@ func dial(addr, known string, auth ssh.AuthMethod) (*ssh.Client, error) {
 	return c, err
 }
 
-// keepAlive pings the tablet while the app holds the connection: without traffic, the tablet's Wi-Fi drops an idle
+// keepAlive pings the Paper Pro while the app holds the connection: without traffic, the Paper Pro's Wi-Fi drops an idle
 // connection after a minute or two, and the next button then fails with a read timeout.
 func keepAlive(c *ssh.Client) {
 	for range time.Tick(20 * time.Second) {
@@ -146,8 +146,8 @@ func loadKey(p string) (ssh.Signer, string, error) {
 	return s, string(ssh.MarshalAuthorizedKey(s.PublicKey())), nil
 }
 
-// connect logs in as root. Normally with the rmpp key; if the tablet does not know it yet, the root password
-// (shown on the tablet in Settings > General > Help > About > Copyrights and licenses) is used once to add the
+// connect logs in as root. Normally with the rmpp key; if the Paper Pro does not know it yet, the root password
+// (shown on the Paper Pro in Settings > General > Help > About > Copyrights and licenses) is used once to add the
 // key. auth tells how it logged in: "key" or "password". needPassword: ask the user and call again.
 func connect(host, password string, o ConnectOptions) (t *Tablet, auth string, needPassword bool, err error) {
 	port := o.Port

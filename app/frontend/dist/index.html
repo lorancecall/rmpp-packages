@@ -15,17 +15,17 @@
 <main>
   <!-- 1. Connect -->
   <section id="connect" class="card">
-    <h2><span class="num">1</span><span data-t="connect">Connect to the tablet</span></h2>
-    <p class="muted" data-t="connect_help">Turn on developer mode on the tablet, connect it with USB (or use its Wi-Fi address).</p>
+    <h2><span class="num">1</span><span data-t="connect">Connect to the Paper Pro</span></h2>
+    <p class="muted" data-t="connect_help">Turn on developer mode on the Paper Pro, connect it with USB (or use its Wi-Fi address).</p>
     <div class="row">
-      <label for="host" data-t="address">Tablet address</label>
+      <label for="host" data-t="address">Paper Pro address</label>
       <input id="host" value="10.11.99.1" spellcheck="false" autocomplete="off">
     </div>
     <div class="row" id="pwrow" hidden>
       <label for="pw" data-t="password">Root password</label>
       <input id="pw" type="password" autocomplete="off">
     </div>
-    <p class="muted small" id="pwhelp" hidden data-t="password_help">Shown on the tablet: Settings › General › Help › About › Copyrights and licenses. Needed once; then a key is used.</p>
+    <p class="muted small" id="pwhelp" hidden data-t="password_help">Shown on the Paper Pro: Settings › General › Help › About › Copyrights and licenses. Needed once; then a key is used.</p>
     <details id="advanced">
       <summary data-t="advanced">Advanced</summary>
       <div class="row">
@@ -38,7 +38,7 @@
         <label for="port" data-t="port">SSH port</label>
         <input id="port" type="number" min="1" max="65535" placeholder="22" class="short">
       </div>
-      <label class="check"><input id="pwOnly" type="checkbox"> <span data-t="pw_only">Log in with the password every time (add no key to the tablet)</span></label>
+      <label class="check"><input id="pwOnly" type="checkbox"> <span data-t="pw_only">Log in with the password every time (add no key to the Paper Pro)</span></label>
     </details>
     <div class="actions">
       <button id="btnConnect" class="primary" type="button" data-t="connect_btn">Connect</button>
@@ -53,20 +53,20 @@
       <span data-t="restore_note">The reMarkable OS was updated: the mods' system files need restoring.</span>
       <button id="btnRestore" type="button" data-t="restore_btn">Restore</button>
     </div>
-    <div id="novellum" class="notice" hidden><span data-t="no_vellum">Vellum (the package manager) is not on the tablet yet: installing sets it up first.</span></div>
+    <div id="novellum" class="notice" hidden><span data-t="no_vellum">Vellum (the package manager) is not on the Paper Pro yet: installing sets it up first.</span></div>
     <ul id="mods" class="mods"></ul>
     <div class="actions">
       <button id="btnInstall" class="primary" type="button" data-t="install_btn">Install ticked</button>
       <button id="btnRemove" type="button" data-t="remove_btn">Remove unticked installed</button>
-      <span class="muted small" data-t="restart_note">The tablet's screen restarts once or twice while installing.</span>
+      <span class="muted small" data-t="restart_note">The Paper Pro's screen restarts once or twice while installing.</span>
     </div>
     <details id="danger">
       <summary data-t="remove_all">Remove everything</summary>
-      <p class="muted small" data-t="remove_all_help">Removes all rmpp mods from the tablet, then rmpp-preload and this package repository. Packages from other repositories stay, and so do rmpp-preload and Vellum while they need them.</p>
+      <p class="muted small" data-t="remove_all_help">Removes all rmpp mods from the Paper Pro, then rmpp-preload and this package repository. Packages from other repositories stay, and so do rmpp-preload and Vellum while they need them.</p>
       <label class="check"><input id="rmPurge" type="checkbox"> <span data-t="rm_purge">Also delete their settings and data (handwriting models, Tailscale login, ...)</span></label>
       <label class="check"><input id="rmVellum" type="checkbox"> <span data-t="rm_vellum">Also remove Vellum (only when no other package uses it)</span></label>
       <div class="actions"><button id="btnRemoveAll" class="danger" type="button" data-t="remove_all_btn">Remove everything…</button></div>
-      <p class="muted small" data-t="cleanup_help">After a factory reset the add-ons' system files stay (a reset only wipes /home, Vellum included), and xochitl keeps loading them. This removes every rmpp system file whose package is not installed. reMarkable Paper Pro with OS 3.29 only: other tablets or versions are refused.</p>
+      <p class="muted small" data-t="cleanup_help">After a factory reset the add-ons' system files stay (a reset only wipes /home, Vellum included), and xochitl keeps loading them. This removes every rmpp system file whose package is not installed. reMarkable Paper Pro with OS 3.29 only: other models or versions are refused.</p>
       <div class="actions"><button id="btnCleanup" class="danger" type="button" data-t="cleanup_btn">Clean up leftover system files…</button></div>
     </details>
   </section>

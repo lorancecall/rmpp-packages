@@ -87,7 +87,7 @@ type CleanupPlan struct {
 	Commands []string `json:"commands"` // the shell commands, in order
 }
 
-// planCleanup works only from the tablet's file listing and the installed Vellum packages, so it can be tested
+// planCleanup works only from the Paper Pro's file listing and the installed Vellum packages, so it can be tested
 // without a tablet.
 func planCleanup(listing []string, installed map[string]bool) CleanupPlan {
 	p := CleanupPlan{}
@@ -166,7 +166,7 @@ func supportedDevice(machine, version string) error {
 		return fmt.Errorf("this is not a reMarkable Paper Pro (%q): nothing was changed", strings.TrimSpace(machine))
 	}
 	if !strings.HasPrefix(strings.TrimSpace(version), "3.29.") {
-		return fmt.Errorf("the rmpp add-ons are made for OS 3.29, this tablet runs %q: nothing was changed", strings.TrimSpace(version))
+		return fmt.Errorf("the rmpp add-ons are made for OS 3.29, this Paper Pro runs %q: nothing was changed", strings.TrimSpace(version))
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func (a *App) PlanCleanup() (CleanupPlan, error) {
 	return a.cleanupPlan()
 }
 
-// Cleanup removes the leftover system files (worked out again here, to match the tablet now).
+// Cleanup removes the leftover system files (worked out again here, to match the Paper Pro now).
 func (a *App) Cleanup() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
