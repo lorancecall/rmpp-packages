@@ -15,11 +15,11 @@ type UninstallOptions struct {
 
 // UninstallPlan says what "Remove everything" will do; PlanUninstall shows it before anything is removed.
 type UninstallPlan struct {
-	Packages []string `json:"packages"` // rmpp Vellum packages (from this catalog), removed with vellum del/purge
+	Packages []string `json:"packages"` // Vellum packages this repository provides, removed with vellum del/purge
 	Files    []string `json:"files"`    // mods not installed by Vellum (GitHub release or copied by hand): their folders
 	Preload  bool     `json:"preload"`  // rmpp-preload is removed too
 	Vellum   bool     `json:"vellum"`   // Vellum is removed too
-	Kept     []string `json:"kept"`     // other packages on the tablet: they keep rmpp-preload and Vellum
+	Kept     []string `json:"kept"`     // other packages on the Paper Pro: they keep rmpp-preload and Vellum
 	Commands []string `json:"commands"` // the shell commands, in order
 }
 
@@ -38,8 +38,9 @@ const (
 	restartXochi  = "systemctl reset-failed xochitl 2>/dev/null; systemctl restart xochitl; sleep 3"
 )
 
-// plan works out the removal from what is on the tablet. Only packages named in this catalog (and rmpp-preload)
-// are removed: packages from other repositories stay, and while any are installed rmpp-preload and Vellum stay too.
+// plan works out the removal from what is on the Paper Pro. Only packages this repository provides are removed
+// (fromThisRepository): packages from other repositories stay, and while any are installed rmpp-preload and
+// Vellum stay too.
 func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 	t := a.tablet
 	p := UninstallPlan{}
@@ -57,11 +58,9 @@ func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 			installed[pkgVersion.ReplaceAllString(l, "")] = true
 		}
 	}
-	ours := map[string]bool{"rmpp-preload": true}
-	for _, m := range a.mods {
-		if m.Package != "" {
-			ours[m.Package] = true
-		}
+	ours, err := a.fromThisRepository(installed)
+	if err != nil {
+		return p, err
 	}
 	for name := range installed {
 		switch {
@@ -144,6 +143,46 @@ func (a *App) plan(o UninstallOptions) (UninstallPlan, error) {
 		p.Commands = append(p.Commands, "rm -rf /home/root/.vellum; sed -i '/\\.vellum\\//d' /home/root/.bashrc")
 	}
 	return p, nil
+}
+
+// fromThisRepository tells which installed packages this package repository provides, as `vellum policy` lists
+// each package's repositories: the repository's index is the list, so no add-on is named here (the same rule as
+// installer/remove-rmpp.sh). When the repository entry is already gone, apk no longer knows the origin: then the
+// catalog's packages and rmpp-* names count.
+func (a *App) fromThisRepository(installed map[string]bool) (map[string]bool, error) {
+	ours := map[string]bool{}
+	var names []string
+	for n := range installed {
+		if !vellumBase[n] {
+			names = append(names, n)
+		}
+	}
+	sort.Strings(names)
+	if len(names) > 0 {
+		cmd := fmt.Sprintf("for p in %s; do %s policy \"$p\" 2>/dev/null | grep -qxF '    %s' && echo \"$p\"; done; true",
+			strings.Join(names, " "), vellumBin, repoURL)
+		out, err := a.tablet.run(cmd, nil, nil)
+		if err != nil {
+			return nil, fmt.Errorf("reading where the packages come from: %w", err)
+		}
+		for _, n := range strings.Fields(out) {
+			ours[n] = true
+		}
+	}
+	if len(ours) == 0 && !a.tablet.ok(fmt.Sprintf("grep -qxF '%s' /home/root/.vellum/etc/apk/repositories", repoURL)) {
+		ours["rmpp-preload"] = true
+		for _, m := range a.mods {
+			if m.Package != "" {
+				ours[m.Package] = true
+			}
+		}
+		for _, n := range names {
+			if strings.HasPrefix(n, "rmpp-") {
+				ours[n] = true
+			}
+		}
+	}
+	return ours, nil
 }
 
 // PlanUninstall shows what "Remove everything" would do; nothing is changed.
