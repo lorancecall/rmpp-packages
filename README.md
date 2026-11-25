@@ -20,7 +20,7 @@ to gather it in one place. Overview: **[lorancecall.github.io/rmpp](https://lora
 | [rmpp-tailscale](https://github.com/lorancecall/rmpp-tailscale) | Tailscale with a Settings page (QR login, devices, updates) and SSH over Tailscale (~70 MB in /home) |
 | [rmpp-refresh](https://github.com/lorancecall/rmpp-refresh) | Refresh button in the toolbar and the library sidebar: one tap clears ghosting |
 | [rmpp-format](https://github.com/lorancecall/rmpp-format) | Bold, italic and a highlight colour on the format bar above the on-screen keyboard: turn one on and type, or select text and tap |
-| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | Handwriting recognition on the Paper Pro: lasso to typed text or movable ink text, Convert page (Korean, Chinese, Japanese, English, Latin; ~80 MB) |
+| [rmpp-hwr](https://github.com/lorancecall/rmpp-hwr) | Handwriting recognition on the Paper Pro: lasso to typed text or a movable text object, Convert page (Korean, Chinese, Japanese, English, Latin; ~80 MB) |
 | [rmpp-textobj](https://github.com/lorancecall/rmpp-textobj) | Text objects: typed text as pen strokes you can select, move, edit and erase like ink (installed with rmpp-hwr) |
 | [rmpp-studio](https://github.com/lorancecall/rmpp-studio) | Desktop app to see and control the Paper Pro from a computer; its Paper Pro part is `rmpp-remote` |
 | `rmpp-preload` | Loads the add-ons into xochitl at boot, keeps xovi working (installed automatically) |
