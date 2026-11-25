@@ -9,8 +9,9 @@ every package another installed package still needs: apk says so and leaves it i
 
 | Package | What it does | Installs with it | Needed by | rmpp setup menu |
 |---|---|---|---|---|
-| `rmpp-preload` | Loads rmpp add-ons into xochitl at boot; all rmpp files in /usr/lib/rmpp, next to xovi | - | `rmpp-bt`, `rmpp-hwr`, `rmpp-lang`, `rmpp-refresh`, `rmpp-remote`, `rmpp-tailscale`, `rmpp-textobj` | (always, with any add-on) |
+| `rmpp-preload` | Loads rmpp add-ons into xochitl at boot; all rmpp files in /usr/lib/rmpp, next to xovi | - | `rmpp-bt`, `rmpp-format`, `rmpp-hwr`, `rmpp-lang`, `rmpp-refresh`, `rmpp-remote`, `rmpp-tailscale`, `rmpp-textobj` | (always, with any add-on) |
 | `rmpp-bt` | Bluetooth settings page and quick-settings toggle; Bluetooth on at boot (no xovi) | `rmpp-preload` | - | Bluetooth settings and toggle |
+| `rmpp-format` | Bold, italic and highlight colour buttons on the keyboard format bar: format text as you type | `rmpp-preload` | - | Bold, italic, highlight |
 | `rmpp-hwr` | Handwriting recognition (beta): lasso to typed text or a text object, Convert page; models are rmpp-hwr-<lang> | `rmpp-lang`, `rmpp-preload`, `rmpp-textobj` | `rmpp-hwr-en`, `rmpp-hwr-ja`, `rmpp-hwr-ko`, `rmpp-hwr-latin`, `rmpp-hwr-zh` | Handwriting recognition (beta) |
 | `rmpp-hwr-en` | English (PaddleOCR PP-OCRv5 base) handwriting model for rmpp-hwr | `rmpp-hwr`, `rmpp-lang`, `rmpp-preload`, `rmpp-textobj` | - | English handwriting model, under Handwriting recognition (beta) |
 | `rmpp-hwr-ja` | Japanese (PaddleOCR PP-OCRv5 base) handwriting model for rmpp-hwr | `rmpp-hwr`, `rmpp-lang`, `rmpp-preload`, `rmpp-textobj` | - | Japanese handwriting model, under Handwriting recognition (beta) |
@@ -23,7 +24,7 @@ every package another installed package still needs: apk says so and leaves it i
 | `rmpp-lang-ko` | Korean keyboard (2-beolsik) on screen and on Type Folio, Bluetooth and USB keyboards, Hanja, Old Hangul | `rmpp-lang`, `rmpp-preload` | `rmpp-lang-ja`, `rmpp-lang-zh` | a language under Languages |
 | `rmpp-lang-ru` | Russian keyboard (ЙЦУКЕН) on screen and on Type Folio, Bluetooth and USB keyboards | `rmpp-lang`, `rmpp-preload` | - | a language under Languages |
 | `rmpp-lang-zh` | Chinese fonts and typing: pinyin (zhongguo), Mandarin in Hangul (중궈) or Korean Hanja readings (중국) | `rmpp-lang`, `rmpp-lang-ko`, `rmpp-preload` | - | a language under Languages |
-| `rmpp-refresh` | Refresh screen button in the notebook toolbar: a full e-paper refresh that clears ghosting | `rmpp-preload` | - | Screen refresh button |
+| `rmpp-refresh` | Refresh screen button in the notebook toolbar and library sidebar: a full e-paper refresh that clears ghosting | `rmpp-preload` | - | Screen refresh button |
 | `rmpp-remote` | rmpp-studio's Paper Pro part: screen capture, recording, UI lookup, text, pen and touch input for rmpp-studio on a computer | `rmpp-preload` | - | Remote control for rmpp-studio |
 | `rmpp-tailscale` | Tailscale (userspace networking) with a Settings page: on/off, QR-code login, status and devices | `rmpp-preload` | - | Tailscale VPN and remote SSH |
 | `rmpp-textobj` | Text objects: typed text drawn as movable, editable ink strokes (T menu > Add text object) | `rmpp-lang`, `rmpp-preload` | `rmpp-hwr` | Text objects (beta) |
