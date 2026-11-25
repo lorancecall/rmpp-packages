@@ -10,6 +10,9 @@ lorancecall):
 4. After a release, update the VELBUILD (`pkgver`, sums) on the default branch. Optionally start the build at once:
    `gh workflow run publish.yml -R lorancecall/rmpp-packages`.
 
+Versions are plain: `pkgrel` stays 0, and every change, packaging-only ones too, bumps `pkgver` (the patch number
+for a packaging-only change) with a release of that version.
+
 [`scripts/registry.py`](scripts/registry.py) finds the add-ons by that topic on every build (daily, on every push
 here, and when started by hand or by a `repository_dispatch` of type `rmpp-release`): it rewrites
 [`mods.txt`](mods.txt) and builds the packages from the add-ons' `packaging/` folders. A package folder there wins
