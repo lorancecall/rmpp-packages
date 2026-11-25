@@ -4,10 +4,10 @@ Add-ons for the reMarkable Paper Pro (OS 3.29), packaged so they install in one 
 Paper Pro; a [Vellum](https://github.com/vellum-dev/vellum) package repository only because that was the easiest way
 to gather it in one place. Overview: **[lorancecall.github.io/rmpp](https://lorancecall.github.io/rmpp/)**.
 
-- **Paper Pro, OS 3.29 only.** Made for and tested on the reMarkable Paper Pro with OS 3.29. Other reMarkable
-  models are not supported and their compatibility is not guaranteed (the packages refuse to install on the
-  reMarkable 1 and 2). Following newer OS versions is something I do when I have time, and may not happen.
-- **Not an official repository**, no support promised. Issues are welcome; fixes come when I have time.
+- **Paper Pro, OS 3.29.** Made for and tested on the reMarkable Paper Pro with OS 3.29. Other reMarkable
+  models are not supported (the packages refuse to install on the reMarkable 1 and 2). Updates for newer OS
+  versions may take some time to follow.
+- **Not an official repository.** Issues are welcome; fixes may take some time.
 - **Take what is useful**: feel free to move a package to Vellum's main repository or anywhere else (keep the
   license, GPL-3.0). No need to ask.
 
