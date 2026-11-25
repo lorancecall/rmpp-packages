@@ -21,11 +21,12 @@ has not moved yet. The installers download `https://lorancecall.github.io/rmpp-p
 run. Menu order: mods already in mods.txt keep their place; new ones follow (`order=` in rmpp-mod.conf, default
 100, then by name). `python3 scripts/registry.py --list` shows what it finds.
 
-Only repositories of the owner are read: a `type=release` mod runs its own install script as root on the Paper Pro.
+Only repositories owned by lorancecall are read (a `type=release` mod runs its own install script as root on the
+Paper Pro); to propose a mod, open an issue.
 
 ## rmpp-mod.conf
 
-`key=value` lines, UTF-8; `#` starts a comment line. Descriptions are shown as they are, so keep the lengths.
+`key=value` lines, UTF-8; `#` starts a comment line. Descriptions are shown as they are, so keep within the lengths given below.
 
 | key | | meaning |
 |---|---|---|
@@ -74,7 +75,8 @@ runs `sh rmpp-install.sh` there as root, then deletes the folder. The script mus
   at the end (not Vellum's `mount-rw`: it unmounts `/etc` recursively and drops `/etc/dropbear`, the SSH host key);
 - never `systemctl stop xochitl` (it powers the Paper Pro off). With rmpp-preload 0.2+ do not restart xochitl
   yourself: re-arm the shared timer (`systemd-run --unit=rmpp-restart-xochitl --on-active=15 ... /usr/lib/rmpp/restart`,
-  see rmpp-hwr's `rmpp-install.sh`), so one restart serves the whole installation;
+  as at the end of `postinstall` in [rmpp-bt's VELBUILD](https://github.com/lorancecall/rmpp-bt/blob/main/packaging/rmpp-bt/VELBUILD)),
+  so one restart serves the whole installation;
 - add-ons for xochitl go to `/usr/lib/rmpp/<mod>/` with a link in `/usr/lib/rmpp/preload.d/` (loaded by
   `rmpp-preload` 0.2+; older versions: `/usr/lib/<mod>/` and `/usr/lib/rmpp-preload.d/`). A library xochitl has
   loaded is renamed to `*.old` (or moved to `/usr/lib/rmpp/.trash/`), never deleted; `/usr/lib/rmpp/restart`
@@ -83,5 +85,5 @@ runs `sh rmpp-install.sh` there as root, then deletes the folder. The script mus
 
 After a reMarkable OS update `/usr/lib` is replaced: running the installer again reinstalls the mod.
 
-Examples: [rmpp-bt](https://github.com/lorancecall/rmpp-bt/blob/main/rmpp-mod.conf) (`vellum`),
-[rmpp-hwr](https://github.com/lorancecall/rmpp-hwr/blob/main/rmpp-mod.conf) (`release`).
+Example: [rmpp-bt](https://github.com/lorancecall/rmpp-bt/blob/main/rmpp-mod.conf) (`vellum`). No mod in the menu
+uses `release` at the moment: every one is a Vellum package (rmpp-hwr moved from `release` to `vellum` in 0.4).

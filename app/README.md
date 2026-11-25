@@ -32,7 +32,8 @@ on first use in the app's config folder (`rmpp-setup/known_hosts`).
 The builds are not code-signed yet:
 
 - **Windows**: SmartScreen says "Windows protected your PC": More info › Run anyway.
-- **macOS**: unzip, then right-click `rmpp setup.app` › Open › Open (once). Or `xattr -dr com.apple.quarantine "rmpp setup.app"`.
+- **macOS**: unzip and open `rmpp setup.app`; the first time, macOS blocks it: allow it in System Settings › Privacy &
+  Security, then open it again. Or `xattr -dr com.apple.quarantine "rmpp setup.app"`.
 - **Linux**: `chmod +x rmpp-setup-linux-*`, then run it. See below for the file and the libraries.
 
 ## Linux
