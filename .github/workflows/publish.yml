@@ -59,6 +59,19 @@ jobs:
         run: |
           for p in packages/*/; do ./scripts/build-package.sh "$(basename "$p")"; done
 
+      # A published version never changes its bytes: a tablet with a cached index checks the apk's hash ("v2 package
+      # integrity error" otherwise). Builds are reproducible, but a new rmpp-lang ref or vbuild can still change the
+      # bytes of an unchanged version, so the published apk of the same file name wins. A changed package needs a
+      # new version (plain versions); the log names the packages whose new build differs.
+      - name: Keep published packages of the same version
+        run: |
+          for f in dist/*/*.apk; do
+            n=$(basename "$f")
+            curl -sfL -o pub.apk "https://lorancecall.github.io/rmpp-packages/aarch64/$n" || { echo "new: $n"; continue; }
+            if cmp -s pub.apk "$f"; then echo "same: $n"; else echo "kept the published $n (this build differs)"; cp pub.apk "$f"; fi
+          done
+          rm -f pub.apk
+
       - name: Make the aarch64 repository
         run: |
           mkdir -p site/aarch64
