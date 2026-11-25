@@ -81,7 +81,8 @@ maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang-{code}
 pkgver={version}
 # r1: layouts in /usr/lib/rmpp/rmpp-lang/languages (rmpp-preload's /usr/lib/rmpp layout, rmpp-lang 0.3.2)
-pkgrel=1
+# r2: the restart waits for apk.vellum; no direct restart while one is waiting
+pkgrel=2
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="{desc}"
@@ -187,10 +188,13 @@ def main():
                       f"\t[ ! -e {L}/{code}.rcc ] || mv {L}/{code}.rcc /usr/lib/rmpp/.trash/{code}.rcc.$$\n" + ro
                       if rcc.exists() else "")
         # layouts are registered when xochitl starts: restart (once per transaction) only for add-ons that have them
-        restart = ("\t# one xochitl restart per Vellum transaction: (re)arm the timer, so the last package script wins\n"
+        restart = ("\t# one xochitl restart per Vellum transaction: (re)arm the timer, so the last package script wins. The restart\n"
+                   "\t# waits until apk.vellum has exited (a large package can outlast the timer); a restart already waiting\n"
+                   "\t# covers this package too, so never restart directly while one is active.\n"
                    "\tsystemctl stop rmpp-restart-xochitl.timer 2>/dev/null || true\n"
+                   "\tsystemctl is-active -q rmpp-restart-xochitl.service || \\\n"
                    "\tsystemd-run --quiet --unit=rmpp-restart-xochitl --on-active=15 --timer-property=AccuracySec=1s \\\n"
-                   "\t\t/bin/sh -c '[ -x /usr/lib/rmpp/restart ] && exec /usr/lib/rmpp/restart; systemctl reset-failed xochitl; systemctl restart xochitl' || \\\n"
+                   "\t\t/bin/sh -c 'i=0; while pidof apk.vellum >/dev/null && [ $i -lt 900 ]; do sleep 1; i=$((i + 1)); done; [ -x /usr/lib/rmpp/restart ] && exec /usr/lib/rmpp/restart; systemctl reset-failed xochitl; systemctl restart xochitl' || \\\n"
                    "\t\t{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }\n"
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
