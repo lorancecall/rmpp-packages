@@ -6,7 +6,7 @@
 #     --purge   also delete the add-ons' settings and data in /home (Tailscale login, handwriting models, ...)
 #     --vellum  also remove Vellum itself (only when no other Vellum packages are installed)
 #
-# Nothing here names an add-on: a new package needs no change in this script.
+# Nothing here names an add-on (except step 0, rmpp-lang's keyboard layouts): a new package needs no change here.
 # 1. The packages are the installed ones that this package repository provides (`vellum policy` lists each
 #    package's repositories), so the repository's index is the list. Each package removes its own files in its
 #    VELBUILD (predeinstall), and its settings and data when Vellum purges it (VELLUM_PURGE=1).
@@ -27,6 +27,29 @@ V=/home/root/.vellum/bin/vellum
 REPO=https://lorancecall.github.io/rmpp-packages
 installed() { "$V" list 2>/dev/null | grep -F '[installed]' | cut -d' ' -f1 | sed 's/-[0-9][^-]*-r[0-9]*$//'; }
 
+# 0. rmpp-lang's keyboard layouts (the one rmpp-lang detail here): xochitl keeps layout ids in its keyboard setting
+#    after the layout is gone and then shows an empty keyboard. The language add-ons take their layouts out of the
+#    setting when they are removed (since pkgrel 1); this covers add-ons installed before that. Noted before the
+#    packages go (<code>:<layout ids> of each add-on with layouts), dropped below once that add-on's layouts are gone.
+LANGS=/usr/lib/rmpp/rmpp-lang/languages
+lang_layouts=""
+for r in "$LANGS"/*.rcc; do
+	[ -e "$r" ] || continue
+	c=$(basename "$r" .rcc)
+	f=/home/root/.local/share/rmpp-lang/languages/$c/language.conf
+	[ -f "$f" ] && lang_layouts="$lang_layouts $c:$(sed -n 's/^layouts[^=]*=//p' "$f" | tr ', \n' ':::' | tr -s ':')"
+done
+drop_keyboard_layouts() {   # same steps as the add-ons' predeinstall (scripts/lang-addons.py)
+	C=/home/root/.config/remarkable/xochitl.conf
+	if [ -f "$C" ] && grep -q '^Keyboard=' "$C"; then
+		awk -v drop=" $* " '/^Keyboard=/ { s = substr($0, 10); gsub(/"/, "", s); n = split(s, a, /, */); v = ""
+			for (i = 1; i <= n; i++) if (a[i] != "" && index(drop, " " a[i] " ") == 0) v = v (v == "" ? "" : ", ") a[i]
+			$0 = "Keyboard=" (v == "" ? "en_US" : v) } { print }' "$C" > "$C.rmpp-new" &&
+			{ cmp -s "$C" "$C.rmpp-new" || cp -f "$C.rmpp-new" "$C"; }
+		rm -f "$C.rmpp-new"
+	fi
+}
+
 # 1. packages
 if [ -x "$V" ]; then
 	all=$(installed | tr '\n' ' ')
@@ -45,6 +68,11 @@ if [ -x "$V" ]; then
 			if [ -n "$PURGE" ]; then "$V" purge $addons; else "$V" del $addons; fi ||
 				echo "warning: vellum could not remove everything"
 		fi
+		gone=""
+		for e in $lang_layouts; do
+			[ -e "$LANGS/${e%%:*}.rcc" ] || gone="$gone $(echo "${e#*:}" | tr ':' ' ')"
+		done
+		[ -z "${gone# }" ] || drop_keyboard_layouts $gone
 		# rmpp-preload last, on its own: apk keeps it (and says why) while a package of another repository needs it
 		case " $ours " in *" rmpp-preload "*)
 			if [ -n "$PURGE" ]; then "$V" purge rmpp-preload; else "$V" del rmpp-preload; fi ||

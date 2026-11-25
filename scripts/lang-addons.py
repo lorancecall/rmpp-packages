@@ -82,8 +82,8 @@ VELBUILD = """\
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang-{code}
 pkgver={version}
-# Plain versions: every change bumps the add-on's version in rmpp-lang (manifest), pkgrel stays 0.
-pkgrel=0
+# Versions: the add-on's version in rmpp-lang (manifest); pkgrel from lang-addons.conf (packaging changes only).
+pkgrel={pkgrel}
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="{desc}"
@@ -121,11 +121,24 @@ postosupgrade() {{
 }}
 
 predeinstall() {{
-{rcc_remove}{restart}	true
+{rcc_remove}{keyboard_drop}{restart}	true
 }}
 sha512sums="
 {sums}
 "
+"""
+
+# predeinstall: drop the add-on's layout ids from xochitl's keyboard setting ("Keyboard=ko_KR" or "Keyboard=en_US,
+# ko_KR"); en_US when none is left. xochitl does not write this key back on exit (it only writes keys it changed),
+# so the restart that follows reads the new value. Same steps as installer/remove-rmpp.sh.
+KEYBOARD_DROP = """	C=/home/root/.config/remarkable/xochitl.conf
+	if [ -f "$C" ] && grep -q '^Keyboard=' "$C"; then
+		awk -v drop=' @IDS@ ' '/^Keyboard=/ { s = substr($0, 10); gsub(/"/, "", s); n = split(s, a, /, */); v = ""
+			for (i = 1; i <= n; i++) if (a[i] != "" && index(drop, " " a[i] " ") == 0) v = v (v == "" ? "" : ", ") a[i]
+			$0 = "Keyboard=" (v == "" ? "en_US" : v) } { print }' "$C" > "$C.rmpp-new" &&
+			{ cmp -s "$C" "$C.rmpp-new" || cp -f "$C.rmpp-new" "$C"; }
+		rm -f "$C.rmpp-new"
+	fi
 """
 
 
@@ -194,6 +207,11 @@ def main():
         rcc_remove = (rw + "\tmkdir -p /usr/lib/rmpp/.trash\n"
                       f"\t[ ! -e {L}/{code}.rcc ] || mv {L}/{code}.rcc /usr/lib/rmpp/.trash/{code}.rcc.$$\n" + ro
                       if rcc.exists() else "")
+        # xochitl keeps the layout ids in its keyboard setting after their layout is gone and then shows an empty
+        # keyboard (only the format bar): take this add-on's layouts out of the setting when it is removed
+        layout_ids = sorted({d.name for k in (src / "languages" / code).glob("keyboards*") if k.is_dir()
+                             for d in k.iterdir() if (d / "keyboard_layout.json").is_file()})
+        keyboard_drop = KEYBOARD_DROP.replace("@IDS@", " ".join(layout_ids)) if layout_ids and rcc.exists() else ""
         # layouts are registered when xochitl starts: restart (once per transaction) only for add-ons that have them
         restart = ("\t# one xochitl restart per Vellum transaction: (re)arm the timer, so the last package script wins. The restart\n"
                    "\t# waits until apk.vellum has exited (a large package can outlast the timer); a restart already waiting\n"
@@ -205,7 +223,7 @@ def main():
                    "\t\t{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }\n"
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
-            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"),
+            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), pkgrel=cfg.get("pkgrel", "0"),
             # layouts in /usr/lib/rmpp/rmpp-lang/languages need rmpp-lang 0.3.2 or later (rmpp-lang#12)
             min_core=max(c.get("min_core", "0.1.0"), "0.3.2", key=lambda v: tuple(int(x) for x in v.split("."))),
             requires="".join(f" {p}" for p in req_pkgs),
@@ -220,7 +238,8 @@ def main():
                          if rcc.exists() else ""),
             license_package=(f'\tinstall -Dm644 "$srcdir"/{code}/LICENSE-fonts "$pkgdir"/home/root/.vellum/licenses/$pkgname/LICENSE-fonts\n'
                              if fonts_license else ""),
-            rcc_copy=rcc_copy, rcc_osupgrade=rcc_osupgrade, rcc_remove=rcc_remove, restart=restart),
+            rcc_copy=rcc_copy, rcc_osupgrade=rcc_osupgrade, rcc_remove=rcc_remove, keyboard_drop=keyboard_drop,
+            restart=restart),
             encoding="utf-8", newline="\n")
         kind_en = "keyboard and fonts" if c.get("input", "none") != "none" and has_fonts else (
             "keyboard" if c.get("input", "none") != "none" else "fonts")
