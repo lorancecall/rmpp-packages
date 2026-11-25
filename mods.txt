@@ -7,3 +7,4 @@ lorancecall/rmpp-hwr
 lorancecall/rmpp-textobj
 lorancecall/rmpp-refresh
 lorancecall/rmpp-studio
+lorancecall/rmpp-format
