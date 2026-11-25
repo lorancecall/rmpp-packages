@@ -1,6 +1,6 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang
-pkgver=0.3.8
+pkgver=0.3.9
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"

@@ -29,8 +29,9 @@ installed() { "$V" list 2>/dev/null | grep -F '[installed]' | cut -d' ' -f1 | se
 
 # 0. rmpp-lang's keyboard layouts (the one rmpp-lang detail here): xochitl keeps layout ids in its keyboard setting
 #    after the layout is gone and then shows an empty keyboard. The language add-ons take their layouts out of the
-#    setting when they are removed (since pkgrel 1); this covers add-ons installed before that. Noted before the
-#    packages go (<code>:<layout ids> of each add-on with layouts), dropped below once that add-on's layouts are gone.
+#    setting when they are removed (since rmpp-lang 0.3.9: bg 0.1.3, ko 0.3.4, ru 0.1.3); this covers add-ons
+#    installed before that. Noted before the packages go (<code>:<layout ids> of each add-on with layouts), dropped
+#    below once that add-on's layouts are gone.
 LANGS=/usr/lib/rmpp/rmpp-lang/languages
 lang_layouts=""
 for r in "$LANGS"/*.rcc; do

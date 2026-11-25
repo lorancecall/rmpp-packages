@@ -82,8 +82,8 @@ VELBUILD = """\
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang-{code}
 pkgver={version}
-# Versions: the add-on's version in rmpp-lang (manifest); pkgrel from lang-addons.conf (packaging changes only).
-pkgrel={pkgrel}
+# Plain versions: every change bumps the add-on's version in rmpp-lang (manifest), pkgrel stays 0.
+pkgrel=0
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="{desc}"
@@ -223,7 +223,7 @@ def main():
                    "\t\t{ systemctl reset-failed xochitl 2>/dev/null || true; systemctl restart xochitl; }\n"
                    if rcc.exists() else "")
         (out / "VELBUILD").write_text(VELBUILD.format(
-            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"), pkgrel=cfg.get("pkgrel", "0"),
+            repo=repo, ref=ref, code=code, version=c.get("version", "0.1.0"),
             # layouts in /usr/lib/rmpp/rmpp-lang/languages need rmpp-lang 0.3.2 or later (rmpp-lang#12)
             min_core=max(c.get("min_core", "0.1.0"), "0.3.2", key=lambda v: tuple(int(x) for x in v.split("."))),
             requires="".join(f" {p}" for p in req_pkgs),
