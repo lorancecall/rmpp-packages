@@ -1,6 +1,6 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang
-pkgver=0.3.6
+pkgver=0.3.7
 pkgrel=0
 upstream_author="lorancecall"
 category="ui"
@@ -120,7 +120,7 @@ predeinstall() {
 	fi
 }
 sha512sums="
-689c80788c232ea3be283548171decea09b607a1ef41db8039a9e35984f1825015860b4c334262c1578651b63766328a939fb33e423190a0b044abbb223d673b  librmpp-lang.so
+63ba329a572ec4d7e6ed9be2f7ff8ecd1f3bba679541716d38f9011ae0779116bc9c978ed16c12fb4b93522e87c0ed11d87e91ea15ef2e6128eab3896334f811  librmpp-lang.so
 a41fecbc15420b09616f2507b255c5c9ac060ebd37942c65ef40e255372dad43fab6eab36f1344bd1de69cf01af51f9cc2271d033a955f324df09b0eec287e12  rmpp-lang.rcc
 f813d9f52f383af5f002062a13b8cdd1ed1ff2ed1f825adf751f949fbe73281f1e834639239bc02fba510ac718d08af63e6d5a1805b77928f069cf26d07dcc4c  rmpp-lang
 900ef9b1d0e1435fb3aad32f035edf8890538292ebb3104af2feb386fb25df134ed0172a0ec542b2c25ff69a39ae62b34ad17e01b3522067a7328abb25aa4fff  LICENSE
