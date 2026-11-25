@@ -11,7 +11,9 @@ language. The installer's list goes to site-addons/rmpp-lang.txt (published as a
 --src uses a local checkout instead of cloning.
 """
 import argparse
+import gzip
 import hashlib
+import os
 import re
 import shutil
 import subprocess
@@ -147,7 +149,12 @@ def main():
     for old in ROOT.glob("packages/rmpp-lang-*"):
         shutil.rmtree(old)
     if codes:
-        subprocess.run(["sh", "tools/build-addon.sh", *codes], cwd=src, check=True)
+        # reproducible: rcc stores each file's modification time (the checkout time here) unless told otherwise, and
+        # the daily rebuild of an unchanged version must give the same bytes (a cached index checks the apk's hash)
+        epoch = os.environ.get("SOURCE_DATE_EPOCH") or subprocess.run(
+            ["git", "-C", str(src), "log", "-1", "--format=%ct"], capture_output=True, text=True).stdout.strip() or "1"
+        env = dict(os.environ, SOURCE_DATE_EPOCH=epoch, QT_RCC_SOURCE_DATE_OVERRIDE=epoch)
+        subprocess.run(["sh", "tools/build-addon.sh", *codes], cwd=src, check=True, env=env)
     blocks = []
     for code in codes:
         c = conf(src / "languages" / code / "language.conf")
@@ -158,7 +165,8 @@ def main():
         out = ROOT / "packages" / f"rmpp-lang-{code}"
         out.mkdir(parents=True)
         tgz = out / f"{code}.tar.gz"
-        with tarfile.open(tgz, "w:gz") as t:          # unpacked by vbuild into $srcdir/<code>/
+        # unpacked by vbuild into $srcdir/<code>/; gzip header time 0 so the same files give the same archive
+        with open(tgz, "wb") as raw, gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz,                 tarfile.open(fileobj=gz, mode="w") as t:
             t.add(built, arcname=code, filter=lambda ti: ti.replace(uid=0, gid=0, uname="", gname="", mtime=0, deep=False))
         files = [tgz.name]
         if rcc.exists():
