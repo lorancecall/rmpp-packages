@@ -80,9 +80,8 @@ VELBUILD = """\
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-lang-{code}
 pkgver={version}
-# r1: layouts in /usr/lib/rmpp/rmpp-lang/languages (rmpp-preload's /usr/lib/rmpp layout, rmpp-lang 0.3.2)
-# r2: the restart waits for apk.vellum; no direct restart while one is waiting
-pkgrel=2
+# Plain versions: every change bumps the add-on's version in rmpp-lang (manifest), pkgrel stays 0.
+pkgrel=0
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="{desc}"
